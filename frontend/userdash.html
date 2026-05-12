@@ -559,8 +559,26 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--navy);col
       </div>
     </div>
   </section>
+  <!-- ─── PAYMENTS ─── -->
+  <section id="sec-payments" class="section">
+    <div class="sec-hdr">
+      <h2 class="sec-title">Payments</h2>
+      <button onclick="openPayModal()" class="btn-gold">+ Make Payment</button>
+    </div>
+    <div class="card" style="margin-bottom:20px;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input id="pay-fetch-id" type="number" class="inp" placeholder="Loan Application ID" style="max-width:220px;"/>
+        <button onclick="fetchPayments()" class="btn-gold" id="pay-fetch-btn">
+          <span>Fetch Payments</span>
+          <div id="pay-fetch-spin" class="spin hidden"></div>
+        </button>
+      </div>
+    </div>
+    <div id="payments-result"></div>
+  </section>
 
-  
+
+
  <!-- ─── PROFILE ─── -->
   <section id="sec-profile" class="section">
     <div class="sec-hdr">
@@ -570,6 +588,9 @@ html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--navy);col
     <div id="profile-loading" style="text-align:center;padding:60px;"><div class="spin spin-lg" style="margin:0 auto 12px;"></div><p style="color:var(--silver);">Loading your profile…</p></div>
     <div id="profile-content" class="hidden"></div>
   </section>
+
+
+
 
 </main>
 
