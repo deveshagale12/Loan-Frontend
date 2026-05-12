@@ -1,0 +1,662 @@
+
+
+
+<script>
+/* ══════════════════════════════════════
+   CONFIG & SESSION
+══════════════════════════════════════ */
+const BASE = 'https://loanapplication-712h.onrender.com';
+const API = {
+  credit:    id   => `${BASE}/api/credit/${id}`,
+  emi:       id   => `${BASE}/api/emi/${id}`,
+  emiCalc:         `${BASE}/api/emi/calculate`,
+  loan:      id   => `${BASE}/api/loans/${id}`,
+  loans:           `${BASE}/api/loans`,
+  applyLoan:       `${BASE}/api/loans/apply`,
+  loanTypes:       `${BASE}/api/loan-types`,
+  payments:  id   => `${BASE}/api/payments/${id}`,
+  pay:             `${BASE}/api/payments/pay`,
+  user:      id   => `${BASE}/api/users/${id}`,
+};
+
+// Session
+const session = {
+  token:  sessionStorage.getItem('loanify_token')  || '',
+  userId: sessionStorage.getItem('loanify_userId') || '1',
+  email:  sessionStorage.getItem('loanify_email')  || '',
+  name:   sessionStorage.getItem('loanify_name')   || 'User',
+};
+
+// Guard — if not logged in redirect
+if (!sessionStorage.getItem('loanify_userId')) {
+  // allow demo mode instead of hard redirect
+  session.userId = '1';
+  session.name = 'Demo User';
+}
+
+let currentSection = 'dashboard';
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', async () => {
+  // Set user info in UI
+  const initials = session.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() || 'U';
+  document.getElementById('avatar').textContent = initials;
+  document.getElementById('topbar-avatar').textContent = initials;
+  document.getElementById('sb-name').textContent = session.name;
+  document.getElementById('hero-name').textContent = session.name.split(' ')[0];
+
+  // Responsive hamburger
+  const ham = document.getElementById('hamburger');
+  if(window.innerWidth <= 768) ham.style.display='flex';
+  window.addEventListener('resize',()=>{ ham.style.display = window.innerWidth<=768?'flex':'none'; });
+
+  // Load dashboard data
+  await loadDashboard();
+});
+
+/* ══════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════ */
+function nav(sec) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+
+  document.getElementById(`sec-${sec}`).classList.add('active');
+  document.querySelector(`.nav-item[onclick="nav('${sec}')"]`)?.classList.add('active');
+
+  const titles = {dashboard:'Dashboard',loans:'My Loans',apply:'Apply for Loan',emi:'EMI Calculator',payments:'Payments',credit:'Credit Score',profile:'My Profile'};
+  const subs   = {dashboard:'Your financial overview',loans:'All your loan applications',apply:'Get funds in 8 minutes',emi:'Plan your repayments',payments:'Manage your payments',credit:'Your CIBIL credit report',profile:'Manage your account'};
+  document.getElementById('page-title').textContent = titles[sec] || sec;
+  document.getElementById('page-sub').textContent   = subs[sec]   || '';
+
+  currentSection = sec;
+  closeSidebar();
+
+  // Lazy load sections
+  if(sec==='loans')    loadLoans();
+  if(sec==='credit')   loadCredit();
+  if(sec==='profile')  loadProfile();
+  if(sec==='apply')    loadLoanTypes();
+}
+
+function refreshSection(){ nav(currentSection); }
+
+/* Sidebar toggles */
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebar-overlay').classList.add('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+
+/* ══════════════════════════════════════
+   AJAX HELPERS
+══════════════════════════════════════ */
+function showLoader(msg='Loading…'){
+  document.getElementById('ajax-txt').textContent=msg;
+  document.getElementById('ajax-overlay').classList.add('show');
+}
+function hideLoader(){ document.getElementById('ajax-overlay').classList.remove('show'); }
+
+function setBtn(txtId,spinId,btnId,on,txt){
+  const b=document.getElementById(btnId);
+  if(b) b.disabled=on;
+  const t=document.getElementById(txtId); if(t) t.textContent=txt;
+  document.getElementById(spinId)?.classList.toggle('hidden',!on);
+}
+
+async function api(url, method='GET', body=null){
+  const opts = { method, headers:{'Content-Type':'application/json','Accept':'application/json'} };
+  if(session.token) opts.headers['Authorization'] = `Bearer ${session.token}`;
+  if(body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  const data = await res.json().catch(()=>null);
+  return { ok: res.ok, status: res.status, data };
+}
+
+/* ══════════════════════════════════════
+   TOAST
+══════════════════════════════════════ */
+function toast(msg, type='inf'){
+  const icons={ok:'✅',err:'❌',inf:'ℹ️'};
+  const d=document.createElement('div');
+  d.className=`toast ${type}`;
+  d.innerHTML=`<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(d);
+  setTimeout(()=>d.remove(),4500);
+}
+
+/* ══════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════ */
+async function loadDashboard(){
+  // Load loans for stats
+  try{
+    const r = await api(API.loans);
+    if(r.ok && r.data){
+      const loans = Array.isArray(r.data) ? r.data : (r.data.content||r.data.loans||[]);
+      document.getElementById('dash-active-loans').textContent = loans.length;
+      const total = loans.reduce((s,l)=>s+(l.loanAmount||l.amount||0),0);
+      document.getElementById('dash-total').textContent = total ? '₹'+fmt(total) : '₹0';
+      // Update badge
+      document.getElementById('loan-count-badge').textContent = loans.length;
+      // Mini list
+      renderDashLoans(loans.slice(0,3));
+    }
+  }catch(e){}
+  // Credit
+  try{
+    const r = await api(API.credit(session.userId));
+    if(r.ok && r.data){
+      const score = r.data.creditScore||r.data.score||r.data.cibilScore||'–';
+      document.getElementById('dash-credit').textContent = score;
+    }
+  }catch(e){}
+}
+
+function renderDashLoans(loans){
+  const el = document.getElementById('dash-loans-list');
+  if(!loans.length){ el.innerHTML=`<p style="color:var(--silver);text-align:center;padding:20px;">No loans found. <button onclick="nav('apply')" style="color:var(--gold);background:none;border:none;cursor:pointer;font-weight:600;">Apply now →</button></p>`; return; }
+  el.innerHTML = loans.map(l=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(30,48,88,.5);">
+      <div>
+        <p style="font-size:.85rem;font-weight:600;">${l.loanType||'Loan'}</p>
+        <p style="font-size:.75rem;color:var(--silver);">₹${fmt(l.loanAmount||0)}</p>
+      </div>
+      ${statusBadge(l.status)}
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════
+   LOANS
+══════════════════════════════════════ */
+async function loadLoans(){
+  show('loans-loading'); hide('loans-list');
+  try{
+    const r = await api(API.loans);
+    hide('loans-loading'); show('loans-list');
+    if(r.ok && r.data){
+      const loans = Array.isArray(r.data)?r.data:(r.data.content||r.data.loans||[]);
+      document.getElementById('loan-count-badge').textContent=loans.length;
+      if(!loans.length){
+        document.getElementById('loans-list').innerHTML=emptyState('No loans yet','You haven\'t applied for any loans.','apply','Apply Now');
+        return;
+      }
+      document.getElementById('loans-list').innerHTML=`<div style="display:flex;flex-direction:column;gap:14px;">`+
+        loans.map(l=>loanCard(l)).join('')+`</div>`;
+    } else {
+      document.getElementById('loans-list').innerHTML=emptyState('Could not load loans','API returned an error. Try refreshing.','','');
+    }
+  }catch(e){
+    hide('loans-loading'); show('loans-list');
+    document.getElementById('loans-list').innerHTML=errState('Network error: '+e.message);
+  }
+}
+
+function loanCard(l){
+  const prog = Math.min(100, Math.round(((l.paidEmi||0)/(l.tenureMonths||1))*100));
+  return `<div class="loan-card" onclick="viewLoan(${l.id||l.loanId||0})">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+      <div>
+        <p style="font-size:.72rem;color:var(--silver);margin-bottom:4px;">#${l.id||l.loanId||'–'}</p>
+        <h4 style="font-weight:600;font-size:1rem;">${l.loanType||'Loan'}</h4>
+        <p style="color:var(--silver);font-size:.8rem;margin-top:2px;">${l.loanPurpose||l.purpose||''}</p>
+      </div>
+      <div style="text-align:right;">
+        ${statusBadge(l.status)}
+        <p style="font-size:1.1rem;font-weight:700;margin-top:6px;color:var(--gold);">₹${fmt(l.loanAmount||0)}</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0;font-size:.78rem;">
+      <div><p style="color:var(--silver);">Rate</p><p style="font-weight:600;">${l.interestRate||'–'}%</p></div>
+      <div><p style="color:var(--silver);">Tenure</p><p style="font-weight:600;">${l.tenureMonths||'–'} mo</p></div>
+      <div><p style="color:var(--silver);">Applied</p><p style="font-weight:600;">${l.appliedDate?new Date(l.appliedDate).toLocaleDateString('en-IN'):'–'}</p></div>
+    </div>
+    <div class="pbar"><div class="pbar-fill" style="width:${prog}%"></div></div>
+    <p style="color:var(--silver);font-size:.7rem;margin-top:4px;">${prog}% repaid</p>
+  </div>`;
+}
+
+async function viewLoan(id){
+  if(!id) return;
+  showLoader('Fetching loan details…');
+  try{
+    const r = await api(API.loan(id));
+    hideLoader();
+    if(r.ok && r.data){
+      const l = r.data;
+      document.getElementById('loan-modal-content').innerHTML=`
+        <div class="g2" style="margin-bottom:16px;">
+          <div><p class="lbl">Loan Type</p><p style="font-weight:600;margin-top:4px;">${l.loanType||'–'}</p></div>
+          <div><p class="lbl">Status</p><div style="margin-top:4px;">${statusBadge(l.status)}</div></div>
+          <div><p class="lbl">Amount</p><p style="font-weight:600;color:var(--gold);margin-top:4px;">₹${fmt(l.loanAmount||0)}</p></div>
+          <div><p class="lbl">Interest Rate</p><p style="font-weight:600;margin-top:4px;">${l.interestRate||'–'}% p.a.</p></div>
+          <div><p class="lbl">Tenure</p><p style="font-weight:600;margin-top:4px;">${l.tenureMonths||'–'} months</p></div>
+          <div><p class="lbl">Monthly Income</p><p style="font-weight:600;margin-top:4px;">₹${fmt(l.monthlyIncome||0)}</p></div>
+          <div><p class="lbl">Employment</p><p style="font-weight:600;margin-top:4px;">${l.employmentType||'–'}</p></div>
+          <div><p class="lbl">Applied Date</p><p style="font-weight:600;margin-top:4px;">${l.appliedDate?new Date(l.appliedDate).toLocaleString('en-IN'):'–'}</p></div>
+        </div>
+        <div style="padding:14px;border-radius:12px;background:rgba(212,168,83,.06);border:1px solid rgba(212,168,83,.15);">
+          <p class="lbl" style="margin-bottom:4px;">Loan Purpose</p>
+          <p style="font-size:.88rem;">${l.loanPurpose||l.purpose||'–'}</p>
+        </div>`;
+      openModal('loan-modal');
+    } else {
+      toast('Failed to load loan details','err');
+    }
+  }catch(e){ hideLoader(); toast('Network error','err'); }
+}
+
+/* ══════════════════════════════════════
+   APPLY LOAN
+══════════════════════════════════════ */
+async function loadLoanTypes(){
+  try{
+    const r = await api(API.loanTypes);
+    if(r.ok && r.data){
+      const types = Array.isArray(r.data)?r.data:(r.data.loanTypes||[]);
+      if(types.length){
+        const icons = {home:'🏠',personal:'💰',business:'🏢',car:'🚗',education:'📚',gold:'🥇',loan:'💳'};
+        document.getElementById('loan-type-cards').innerHTML=types.map(t=>{
+          const nm = typeof t==='string'?t:(t.name||t.loanType||'Loan');
+          const key = nm.toLowerCase().split(' ')[0];
+          return `<div class="stat-card" style="cursor:pointer;" onclick="document.getElementById('a-type').value='${nm}'">
+            <div style="font-size:2rem;margin-bottom:8px;">${icons[key]||'💳'}</div>
+            <p style="font-weight:600;font-size:.9rem;">${nm}</p>
+            <p style="color:var(--silver);font-size:.75rem;margin-top:4px;">${t.description||'Tap to select'}</p>
+          </div>`;
+        }).join('');
+        return;
+      }
+    }
+  }catch(e){}
+  // Fallback static cards
+  const defaults=[{n:'Home Loan',i:'🏠',d:'From 8.5% p.a.'},{n:'Personal Loan',i:'💰',d:'Quick disbursement'},{n:'Business Loan',i:'🏢',d:'Grow your business'},{n:'Car Loan',i:'🚗',d:'Drive your dream car'},{n:'Education Loan',i:'📚',d:'Invest in your future'},{n:'Gold Loan',i:'🥇',d:'Instant against gold'}];
+  document.getElementById('loan-type-cards').innerHTML=defaults.map(d=>`
+    <div class="stat-card" style="cursor:pointer;" onclick="document.getElementById('a-type').value='${d.n}'">
+      <div style="font-size:2rem;margin-bottom:8px;">${d.i}</div>
+      <p style="font-weight:600;font-size:.9rem;">${d.n}</p>
+      <p style="color:var(--silver);font-size:.75rem;margin-top:4px;">${d.d}</p>
+    </div>`).join('');
+}
+
+async function submitLoanApp(e){
+  e.preventDefault();
+  const type=val('a-type'),amount=val('a-amount'),rate=val('a-rate'),tenure=val('a-tenure'),income=val('a-income'),emp=val('a-emp'),purpose=val('a-purpose');
+  if(!type||!amount||!rate||!tenure||!income||!emp||!purpose){ toast('Please fill all fields','err'); return; }
+
+  setBtn('apply-txt','apply-spin','apply-btn',true,'Submitting…');
+  showLoader('Submitting your application…');
+
+  const payload={
+    userId: parseInt(session.userId),
+    loanType: type, loanAmount: parseFloat(amount),
+    interestRate: parseFloat(rate), tenureMonths: parseInt(tenure),
+    monthlyIncome: parseFloat(income), employmentType: emp,
+    loanPurpose: purpose, status:'PENDING',
+    appliedDate: new Date().toISOString().slice(0,19)
+  };
+
+  try{
+    const r = await api(API.applyLoan,'POST',payload);
+    hideLoader();
+    if(r.ok||r.status===201){
+      toast('✅ Loan application submitted!','ok');
+      document.getElementById('apply-form').reset();
+      setTimeout(()=>nav('loans'),1200);
+    } else {
+      toast((r.data?.message||'Application failed. Try again.'),'err');
+    }
+  }catch(err){ hideLoader(); toast('Network error','err'); }
+  finally{ setBtn('apply-txt','apply-spin','apply-btn',false,'Submit Application'); }
+}
+
+/* ══════════════════════════════════════
+   EMI
+══════════════════════════════════════ */
+function liveEmi(){
+  const P=parseFloat(document.getElementById('e-principal').value)||0;
+  const R=(parseFloat(document.getElementById('e-rate').value)||0)/12/100;
+  const N=parseInt(document.getElementById('e-tenure').value)||0;
+  if(!P||!R||!N){ reset_emi_display(); return; }
+  const emi = (P*R*Math.pow(1+R,N))/(Math.pow(1+R,N)-1);
+  const total = emi*N, interest = total-P;
+  const ppct = Math.round((P/total)*100);
+  document.getElementById('live-emi').textContent=      '₹'+fmt(Math.round(emi));
+  document.getElementById('live-interest').textContent= '₹'+fmt(Math.round(interest));
+  document.getElementById('live-total').textContent=    '₹'+fmt(Math.round(total));
+  document.getElementById('live-tenure').textContent=   N+' mo';
+  document.getElementById('pbar-principal').style.width=ppct+'%';
+}
+
+function reset_emi_display(){
+  ['live-emi','live-interest','live-total','live-tenure'].forEach(id=>document.getElementById(id).textContent='₹ –');
+  document.getElementById('pbar-principal').style.width='0%';
+}
+
+async function calcEmi(){
+  const loanAppId=parseInt(document.getElementById('e-appid').value)||101;
+  const principalAmount=parseFloat(document.getElementById('e-principal').value);
+  const interestRate=parseFloat(document.getElementById('e-rate').value);
+  const tenureMonths=parseInt(document.getElementById('e-tenure').value);
+  if(!principalAmount||!interestRate||!tenureMonths){ toast('Fill all EMI fields','err'); return; }
+
+  setBtn('emi-txt','emi-spin','emi-btn',true,'Calculating…');
+  showLoader('Calculating EMI…');
+
+  try{
+    const r = await api(API.emiCalc,'POST',{loanAppId,principalAmount,interestRate,tenureMonths,calculationDate:new Date().toISOString().slice(0,19)});
+    hideLoader();
+    if(r.ok&&r.data){
+      const d=r.data;
+      document.getElementById('emi-api-content').innerHTML=`
+        <div class="g2" style="gap:12px;">
+          <div><p style="color:var(--silver);font-size:.72rem;">Monthly EMI</p><p style="font-weight:700;font-size:1.2rem;color:var(--gold);">₹${fmt(d.monthlyEmi||d.emi||d.emiAmount||0)}</p></div>
+          <div><p style="color:var(--silver);font-size:.72rem;">Total Amount</p><p style="font-weight:700;font-size:1.2rem;">₹${fmt(d.totalAmount||d.totalRepayment||0)}</p></div>
+          <div><p style="color:var(--silver);font-size:.72rem;">Total Interest</p><p style="font-weight:700;font-size:1.2rem;">₹${fmt(d.totalInterest||0)}</p></div>
+          <div><p style="color:var(--silver);font-size:.72rem;">Processing Fee</p><p style="font-weight:700;font-size:1.2rem;">₹${fmt(d.processingFee||0)}</p></div>
+        </div>`;
+      show('emi-api-result');
+      toast('EMI calculated successfully','ok');
+    } else {
+      toast(r.data?.message||'Calculation failed','err');
+    }
+  }catch(err){ hideLoader(); toast('Network error','err'); }
+  finally{ setBtn('emi-txt','emi-spin','emi-btn',false,'Calculate via API'); }
+}
+
+async function fetchEmiById(){
+  const id=document.getElementById('e-appid').value;
+  if(!id){ toast('Enter a Loan Application ID','err'); return; }
+  showLoader('Fetching EMI…');
+  try{
+    const r=await api(API.emi(id));
+    hideLoader();
+    if(r.ok&&r.data){
+      const d=r.data;
+      document.getElementById('emi-api-content').innerHTML=`
+        <div class="g2" style="gap:12px;">
+          <div><p style="color:var(--silver);font-size:.72rem;">EMI ID</p><p style="font-weight:600;">${d.id||'–'}</p></div>
+          <div><p style="color:var(--silver);font-size:.72rem;">Monthly EMI</p><p style="font-weight:700;color:var(--gold);">₹${fmt(d.monthlyEmi||d.emiAmount||0)}</p></div>
+          <div><p style="color:var(--silver);font-size:.72rem;">Principal</p><p style="font-weight:600;">₹${fmt(d.principalAmount||0)}</p></div>
+          <div><p style="color:var(--silver);font-size:.72rem;">Interest Rate</p><p style="font-weight:600;">${d.interestRate||0}%</p></div>
+        </div>`;
+      show('emi-api-result');
+      toast('EMI fetched successfully','ok');
+    } else {
+      toast('No EMI record found for this ID','err');
+    }
+  }catch(e){ hideLoader(); toast('Network error','err'); }
+}
+
+/* ══════════════════════════════════════
+   PAYMENTS
+══════════════════════════════════════ */
+async function fetchPayments(){
+  const id=val('pay-fetch-id');
+  if(!id){ toast('Enter a Loan Application ID','err'); return; }
+  setBtn('','pay-fetch-spin','',true,'Fetching…');
+  document.getElementById('pay-fetch-btn').disabled=true;
+  showLoader('Fetching payments…');
+  try{
+    const r=await api(API.payments(id));
+    hideLoader();
+    document.getElementById('pay-fetch-btn').disabled=false;
+    document.getElementById('pay-fetch-spin').classList.add('hidden');
+    if(r.ok&&r.data){
+      const payments=Array.isArray(r.data)?r.data:(r.data.payments||[]);
+      if(!payments.length){ document.getElementById('payments-result').innerHTML=emptyState('No payments found','No payments recorded for this loan ID.','',''); return; }
+      document.getElementById('payments-result').innerHTML=`
+        <div class="tbl-wrap"><table class="tbl">
+          <thead><tr><th>ID</th><th>Amount</th><th>Method</th><th>Transaction ID</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody>`+payments.map(p=>`<tr>
+            <td>${p.id||'–'}</td>
+            <td style="color:var(--gold);font-weight:600;">₹${fmt(p.amount||0)}</td>
+            <td>${p.paymentMethod||'–'}</td>
+            <td style="font-size:.75rem;color:var(--silver);">${p.transactionId||'–'}</td>
+            <td>${statusBadge(p.paymentStatus||p.status)}</td>
+            <td style="font-size:.78rem;">${p.paymentDate?new Date(p.paymentDate).toLocaleDateString('en-IN'):'–'}</td>
+          </tr>`).join('')+`</tbody></table></div>`;
+      toast('Payments loaded','ok');
+    } else {
+      document.getElementById('payments-result').innerHTML=errState(r.data?.message||'No payment records found.');
+    }
+  }catch(e){ hideLoader(); document.getElementById('pay-fetch-btn').disabled=false; toast('Network error','err'); }
+}
+
+function openPayModal(){ openModal('pay-modal'); }
+
+async function submitPayment(){
+  const loanApplicationId=parseInt(val('pm-loanid'));
+  const amount=parseFloat(val('pm-amount'));
+  const paymentMethod=val('pm-method');
+  const transactionId=val('pm-txn');
+  if(!loanApplicationId||!amount||!paymentMethod){ toast('Fill all payment fields','err'); return; }
+
+  setBtn('pm-txt','pm-spin','pm-btn',true,'Processing…');
+  showLoader('Processing payment…');
+  try{
+    const r=await api(API.pay,'POST',{loanApplicationId,amount,paymentMethod,transactionId:transactionId||('TXN'+Date.now()),paymentStatus:'SUCCESS',paymentDate:new Date().toISOString().slice(0,19)});
+    hideLoader();
+    if(r.ok||r.status===201){
+      toast('✅ Payment successful!','ok');
+      closeModal('pay-modal');
+      document.getElementById('pm-loanid').value='';
+      document.getElementById('pm-amount').value='';
+      document.getElementById('pm-txn').value='';
+    } else {
+      toast(r.data?.message||'Payment failed','err');
+    }
+  }catch(e){ hideLoader(); toast('Network error','err'); }
+  finally{ setBtn('pm-txt','pm-spin','pm-btn',false,'Pay Now'); }
+}
+
+/* ══════════════════════════════════════
+   CREDIT SCORE
+══════════════════════════════════════ */
+async function loadCredit(){
+  show('credit-loading'); hide('credit-content');
+  try{
+    const r=await api(API.credit(session.userId));
+    hide('credit-loading');
+    if(r.ok&&r.data){
+      const d=r.data;
+      const score=d.creditScore||d.score||d.cibilScore||700;
+      document.getElementById('credit-score-val').textContent=score;
+      // Animate ring: 427 = 2πr
+      const pct=(score-300)/600;
+      setTimeout(()=>{ document.getElementById('score-ring').style.strokeDashoffset=427-(427*pct); },100);
+      // Color
+      const color = score>=750?'#22c55e':score>=650?'#eab308':score>=550?'#f97316':'#ef4444';
+      document.getElementById('score-ring').style.stroke=color;
+      document.getElementById('credit-score-val').style.color=color;
+      // Grade
+      const grade=score>=750?'Excellent':score>=650?'Good':score>=550?'Fair':'Poor';
+      document.getElementById('credit-grade-badge').innerHTML=`<span class="badge ${score>=750?'badge-green':score>=650?'badge-gold':score>=550?'badge-blue':'badge-red'}">${grade}</span>`;
+      document.getElementById('credit-desc').textContent=score>=750?'Excellent score! You qualify for best rates and offers.':score>=650?'Good score. Most lenders will approve your application.':score>=550?'Fair score. Consider improving before applying.':'Poor score. Work on improving credit before applying.';
+      // Details
+      const rows=[
+        ['Credit Utilization', d.creditUtilization||'–','%'],
+        ['Payment History',d.paymentHistory||'On Time',''],
+        ['Credit Age',d.creditAge||d.avgAccountAge||'–',' yrs'],
+        ['Total Accounts',d.totalAccounts||'–',''],
+        ['Enquiries (6mo)',d.recentEnquiries||0,''],
+      ];
+      document.getElementById('credit-details').innerHTML=rows.map(([k,v,u])=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(30,48,88,.4);">
+          <span style="color:var(--silver);font-size:.83rem;">${k}</span>
+          <span style="font-weight:600;font-size:.83rem;">${v}${u}</span>
+        </div>`).join('');
+      show('credit-content');
+    } else {
+      // Demo fallback
+      renderDemoCredit(720);
+    }
+  }catch(e){ hide('credit-loading'); renderDemoCredit(720); }
+}
+
+function renderDemoCredit(score){
+  document.getElementById('credit-score-val').textContent=score;
+  setTimeout(()=>{const p=(score-300)/600; document.getElementById('score-ring').style.strokeDashoffset=427-(427*p);},100);
+  document.getElementById('score-ring').style.stroke='#22c55e';
+  document.getElementById('credit-score-val').style.color='#22c55e';
+  document.getElementById('credit-grade-badge').innerHTML=`<span class="badge badge-green">Good</span>`;
+  document.getElementById('credit-desc').textContent='Demo data – Good score. Most lenders will approve your application.';
+  document.getElementById('credit-details').innerHTML=`<div style="color:var(--silver);font-size:.82rem;padding:10px 0;">Demo mode: connect your account to see real credit data.</div>`;
+  show('credit-content');
+}
+
+/* ══════════════════════════════════════
+   PROFILE
+══════════════════════════════════════ */
+let profileData = {};
+
+async function loadProfile(){
+  show('profile-loading'); hide('profile-content');
+  try{
+    const r=await api(API.user(session.userId));
+    hide('profile-loading');
+    if(r.ok&&r.data){
+      profileData=r.data;
+      renderProfile(r.data);
+      show('profile-content');
+    } else {
+      renderProfile({fullName:session.name,email:session.email,phone:'–',city:'–',state:'–',address:'–',pincode:'–',aadhaarNumber:'XXXX-XXXX-XXXX',panNumber:'XXXXX0000X',role:'ROLE_USER'});
+      show('profile-content');
+    }
+  }catch(e){
+    hide('profile-loading');
+    renderProfile({fullName:session.name,email:session.email});
+    show('profile-content');
+  }
+}
+
+function renderProfile(d){
+  const initials=(d.fullName||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('profile-content').innerHTML=`
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+      <!-- Avatar card -->
+      <div class="card" style="flex:0 0 auto;min-width:200px;text-align:center;">
+        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:var(--navy);margin:0 auto 12px;">${initials}</div>
+        <h3 style="font-weight:700;font-size:1.1rem;">${d.fullName||'–'}</h3>
+        <p style="color:var(--silver);font-size:.8rem;margin-top:4px;">${d.email||'–'}</p>
+        <div style="margin-top:12px;">${statusBadge(d.role==='ROLE_USER'?'ACTIVE':d.role||'USER')}</div>
+      </div>
+      <!-- Details -->
+      <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:16px;">
+        <div class="card">
+          <h4 style="font-weight:600;margin-bottom:14px;color:var(--gold);">Personal Information</h4>
+          <div class="g2" style="gap:12px;">
+            ${prow('Full Name',d.fullName)}${prow('Phone',d.phone)}
+            ${prow('City',d.city)}${prow('State',d.state)}
+            ${prow('PIN Code',d.pincode)}${prow('Address',d.address)}
+          </div>
+        </div>
+        <div class="card">
+          <h4 style="font-weight:600;margin-bottom:14px;color:var(--gold);">KYC Details</h4>
+          <div class="g2" style="gap:12px;">
+            ${prow('Aadhaar',d.aadhaarNumber?'XXXX-XXXX-'+d.aadhaarNumber.slice(-4):'–')}
+            ${prow('PAN',d.panNumber||'–')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function prow(label,val){return `<div><p class="lbl" style="margin-bottom:4px;">${label}</p><p style="font-size:.88rem;font-weight:500;">${val||'–'}</p></div>`;}
+
+function openEditModal(){
+  const d=profileData;
+  document.getElementById('ep-name').value=d.fullName||session.name||'';
+  document.getElementById('ep-email').value=d.email||session.email||'';
+  document.getElementById('ep-phone').value=d.phone||'';
+  document.getElementById('ep-city').value=d.city||'';
+  document.getElementById('ep-state').value=d.state||'';
+  document.getElementById('ep-pin').value=d.pincode||'';
+  document.getElementById('ep-addr').value=d.address||'';
+  openModal('edit-modal');
+}
+
+async function updateProfile(){
+  const payload={
+    fullName:val('ep-name'),email:val('ep-email'),phone:val('ep-phone'),
+    city:val('ep-city'),state:val('ep-state'),pincode:val('ep-pin'),address:val('ep-addr'),
+    aadhaarNumber:profileData.aadhaarNumber||'',panNumber:profileData.panNumber||'',
+    password:profileData.password||'',role:profileData.role||'ROLE_USER',
+  };
+  if(!payload.fullName||!payload.email){ toast('Name and email are required','err'); return; }
+  setBtn('ep-txt','ep-spin','ep-btn',true,'Saving…');
+  showLoader('Updating profile…');
+  try{
+    const r=await api(API.user(session.userId),'PUT',payload);
+    hideLoader();
+    if(r.ok){
+      toast('✅ Profile updated!','ok');
+      sessionStorage.setItem('loanify_name',payload.fullName);
+      session.name=payload.fullName;
+      document.getElementById('sb-name').textContent=payload.fullName;
+      const ini=payload.fullName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+      document.getElementById('avatar').textContent=ini;
+      document.getElementById('topbar-avatar').textContent=ini;
+      document.getElementById('hero-name').textContent=payload.fullName.split(' ')[0];
+      profileData={...profileData,...payload};
+      closeModal('edit-modal');
+      renderProfile(profileData); show('profile-content');
+    } else {
+      toast(r.data?.message||'Update failed','err');
+    }
+  }catch(e){ hideLoader(); toast('Network error','err'); }
+  finally{ setBtn('ep-txt','ep-spin','ep-btn',false,'Save Changes'); }
+}
+
+/* ══════════════════════════════════════
+   LOGOUT
+══════════════════════════════════════ */
+function logout(){
+  sessionStorage.clear();
+  toast('Signed out successfully','ok');
+  setTimeout(()=>{ window.location.href='user-auth.html'; },800);
+}
+
+/* ══════════════════════════════════════
+   MODAL HELPERS
+══════════════════════════════════════ */
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+// Close on backdrop click
+document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m) m.classList.remove('show');}));
+
+/* ══════════════════════════════════════
+   UI HELPERS
+══════════════════════════════════════ */
+function show(id){ document.getElementById(id)?.classList.remove('hidden'); }
+function hide(id){ document.getElementById(id)?.classList.add('hidden'); }
+function val(id){ return (document.getElementById(id)?.value||'').trim(); }
+function fmt(n){ return Number(n).toLocaleString('en-IN'); }
+
+function statusBadge(s){
+  if(!s) return '';
+  const map={PENDING:'badge-gold',APPROVED:'badge-green',REJECTED:'badge-red',ACTIVE:'badge-green',CLOSED:'badge-blue',SUCCESS:'badge-green',FAILED:'badge-red',ROLE_USER:'badge-blue'};
+  const cls=map[s?.toUpperCase()]||'badge-blue';
+  return `<span class="badge ${cls}">${s}</span>`;
+}
+
+function emptyState(title,desc,navTo,btnTxt){
+  return `<div class="card" style="text-align:center;padding:48px 24px;">
+    <div style="font-size:3rem;margin-bottom:12px;">📭</div>
+    <h3 style="font-weight:600;margin-bottom:8px;">${title}</h3>
+    <p style="color:var(--silver);font-size:.85rem;margin-bottom:20px;">${desc}</p>
+    ${navTo?`<button onclick="nav('${navTo}')" class="btn-gold">${btnTxt}</button>`:''}
+  </div>`;
+}
+
+function errState(msg){
+  return `<div class="card" style="text-align:center;padding:40px;"><div style="font-size:2.5rem;margin-bottom:10px;">⚠️</div><p style="color:var(--danger);font-size:.88rem;">${msg}</p></div>`;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LoanVault Admin — Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #e8c97a;
+      --dark: #0a0a0f;
+      --dark2: #111118;
+      --dark3: #1a1a24;
+      --border: rgba(201,168,76,0.18);
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--dark);
+      color: #e8e8f0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated BG */
+    .bg-canvas {
+      position: fixed; inset: 0; z-index: 0; overflow: hidden;
+    }
+    .orb {
+      position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.18;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .orb1 { width: 500px; height: 500px; background: #c9a84c; top: -150px; left: -100px; animation-delay: 0s; }
+    .orb2 { width: 400px; height: 400px; background: #2d3a7c; bottom: -100px; right: -80px; animation-delay: 3s; }
+    .orb3 { width: 300px; height: 300px; background: #c9a84c; top: 50%; left: 55%; animation-delay: 6s; }
+    @keyframes drift {
+      0%   { transform: translate(0,0) scale(1); }
+      100% { transform: translate(40px,30px) scale(1.08); }
+    }
+
+    /* Grid overlay */
+    .grid-overlay {
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* Card */
+    .card {
+      background: rgba(17,17,24,0.85);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(201,168,76,0.1);
+      animation: cardIn 0.8s cubic-bezier(0.16,1,0.3,1) both;
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(40px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Logo pulse */
+    .logo-ring {
+      animation: logoSpin 6s linear infinite;
+    }
+    @keyframes logoSpin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* Input */
+    .inp {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(201,168,76,0.2);
+      color: #e8e8f0;
+      transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .inp:focus {
+      outline: none;
+      border-color: var(--gold);
+      background: rgba(201,168,76,0.06);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+    }
+    .inp::placeholder { color: rgba(200,200,220,0.3); }
+
+    /* Gold button */
+    .btn-gold {
+      background: linear-gradient(135deg, #c9a84c 0%, #e8c97a 50%, #c9a84c 100%);
+      background-size: 200% 200%;
+      color: #0a0a0f;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      font-family: 'DM Sans', sans-serif;
+      transition: background-position 0.4s, transform 0.2s, box-shadow 0.3s;
+      box-shadow: 0 4px 24px rgba(201,168,76,0.3);
+    }
+    .btn-gold:hover {
+      background-position: 100% 0;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 32px rgba(201,168,76,0.45);
+    }
+    .btn-gold:active { transform: translateY(0); }
+    .btn-gold:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Spinner */
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(10,10,15,0.3);
+      border-top-color: #0a0a0f;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Float label */
+    .field-wrap { position: relative; }
+    .field-label {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: rgba(200,200,220,0.4);
+      font-size: 13px;
+      pointer-events: none;
+      transition: all 0.25s;
+    }
+    .field-wrap.has-value .field-label,
+    .field-wrap:focus-within .field-label {
+      top: 8px; font-size: 10px; color: var(--gold); transform: none;
+    }
+    .field-wrap.has-value .inp,
+    .field-wrap:focus-within .inp {
+      padding-top: 20px; padding-bottom: 6px;
+    }
+
+    /* Error shake */
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%,60%  { transform: translateX(-6px); }
+      40%,80%  { transform: translateX(6px); }
+    }
+    .shake { animation: shake 0.4s ease; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: rgba(17,17,24,0.95); border: 1px solid var(--border);
+      backdrop-filter: blur(16px); border-radius: 12px;
+      padding: 14px 24px; font-size: 14px; z-index: 9999;
+      transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.4s;
+      opacity: 0;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.error { border-color: rgba(239,68,68,0.4); color: #fca5a5; }
+    .toast.success { border-color: rgba(201,168,76,0.4); color: var(--gold-light); }
+
+    /* Stagger reveal */
+    .reveal { opacity: 0; transform: translateY(18px); animation: revealIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards; }
+    .reveal:nth-child(1) { animation-delay: 0.15s; }
+    .reveal:nth-child(2) { animation-delay: 0.25s; }
+    .reveal:nth-child(3) { animation-delay: 0.35s; }
+    .reveal:nth-child(4) { animation-delay: 0.45s; }
+    .reveal:nth-child(5) { animation-delay: 0.55s; }
+    @keyframes revealIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Page loader overlay */
+    #page-loader {
+      position: fixed; inset: 0; z-index: 9998;
+      background: var(--dark);
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.6s, visibility 0.6s;
+    }
+    #page-loader.hidden { opacity: 0; visibility: hidden; }
+    .loader-icon {
+      width: 56px; height: 56px;
+      border: 3px solid rgba(201,168,76,0.15);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Page Loader -->
+<div id="page-loader">
+  <div class="flex flex-col items-center gap-4">
+    <div class="loader-icon"></div>
+    <p style="font-family:'Playfair Display',serif; color:var(--gold); letter-spacing:0.08em; font-size:13px;">LOANVAULT</p>
+  </div>
+</div>
+
+<!-- BG -->
+<div class="bg-canvas">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+</div>
+<div class="grid-overlay"></div>
+
+<!-- Main -->
+<main class="relative z-10 min-h-screen flex items-center justify-center px-4 py-12">
+  <div class="w-full max-w-md">
+
+    <!-- Card -->
+    <div class="card rounded-2xl p-8 sm:p-10">
+
+      <!-- Logo -->
+      <div class="reveal flex flex-col items-center mb-8">
+        <div class="relative w-16 h-16 mb-4">
+          <svg class="logo-ring absolute inset-0 w-full h-full" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="30" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-dasharray="8 4"/>
+            <defs>
+              <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#c9a84c"/>
+                <stop offset="100%" stop-color="#e8c97a"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <svg viewBox="0 0 32 32" class="w-8 h-8" fill="none">
+              <path d="M4 10h24M4 16h16M4 22h20" stroke="url(#g2)" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="24" cy="22" r="5" fill="none" stroke="url(#g2)" stroke-width="1.5"/>
+              <path d="M22 22l1.5 1.5L26 20" stroke="url(#g2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <defs>
+                <linearGradient id="g2" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#c9a84c"/>
+                  <stop offset="1" stop-color="#e8c97a"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+        <h1 style="font-family:'Playfair Display',serif; font-size:28px; font-weight:900; letter-spacing:0.04em;" class="text-white">LoanVault</h1>
+        <p style="font-size:11px; letter-spacing:0.2em; color:var(--gold); margin-top:2px;">ADMIN CONTROL CENTER</p>
+      </div>
+
+      <!-- Divider -->
+      <div class="reveal flex items-center gap-3 mb-8">
+        <div class="flex-1 h-px" style="background:var(--border)"></div>
+        <span style="font-size:11px; color:rgba(200,200,220,0.3); letter-spacing:0.12em;">SECURE ACCESS</span>
+        <div class="flex-1 h-px" style="background:var(--border)"></div>
+      </div>
+
+      <!-- Form -->
+      <form id="loginForm" class="space-y-5" onsubmit="handleLogin(event)">
+
+        <!-- Email -->
+        <div class="reveal field-wrap" id="emailWrap">
+          <label class="field-label">Email Address</label>
+          <input type="email" id="email" class="inp w-full rounded-xl px-4 py-4 text-sm"
+            value="admin@loanapp.com"
+            oninput="checkField('emailWrap')"
+          />
+        </div>
+
+        <!-- Password -->
+        <div class="reveal field-wrap" id="passWrap">
+          <label class="field-label">Password</label>
+          <input type="password" id="password" class="inp w-full rounded-xl px-4 py-4 text-sm"
+            value="adminSecurePass123"
+            oninput="checkField('passWrap')"
+          />
+          <button type="button" onclick="togglePass()" class="absolute right-4 top-1/2 -translate-y-1/2" style="color:rgba(200,200,220,0.4); transition:color 0.2s;" onmouseenter="this.style.color='var(--gold)'" onmouseleave="this.style.color='rgba(200,200,220,0.4)'">
+            <svg id="eyeIcon" viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Error -->
+        <div id="errMsg" class="hidden rounded-xl px-4 py-3 text-sm" style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); color:#fca5a5;"></div>
+
+        <!-- Submit -->
+        <div class="reveal pt-2">
+          <button type="submit" id="submitBtn" class="btn-gold w-full rounded-xl py-4 text-sm flex items-center justify-center gap-3">
+            <span id="btnText">Access Dashboard</span>
+            <div id="btnSpinner" class="spinner hidden"></div>
+          </button>
+        </div>
+
+      </form>
+
+      <!-- Footer note -->
+      <div class="reveal mt-8 text-center">
+        <p style="font-size:11px; color:rgba(200,200,220,0.25); letter-spacing:0.06em;">
+          Protected by 256-bit encryption &nbsp;·&nbsp; Admin access only
+        </p>
+      </div>
+    </div>
+
+    <!-- Bottom badge -->
+    <div class="reveal mt-6 flex items-center justify-center gap-2" style="color:rgba(200,200,220,0.2); font-size:11px; letter-spacing:0.1em;">
+      <svg viewBox="0 0 16 16" class="w-3 h-3" fill="currentColor"><path d="M8 1a4 4 0 014 4v1h1a1 1 0 011 1v7a1 1 0 01-1 1H3a1 1 0 01-1-1V7a1 1 0 011-1h1V5a4 4 0 014-4zm0 1.5A2.5 2.5 0 005.5 5v1h5V5A2.5 2.5 0 008 2.5z"/></svg>
+      LOANVAULT © 2026
+    </div>
+
+  </div>
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // Remove page loader
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.getElementById('page-loader').classList.add('hidden');
+    }, 800);
+  });
+
+  // Check field for float label
+  function checkField(wrapId) {
+    const wrap = document.getElementById(wrapId);
+    const inp = wrap.querySelector('input');
+    wrap.classList.toggle('has-value', inp.value.trim() !== '');
+  }
+
+  // Init float labels
+  document.querySelectorAll('.field-wrap input').forEach(inp => {
+    if (inp.value) inp.closest('.field-wrap').classList.add('has-value');
+  });
+
+  // Toggle password
+  function togglePass() {
+    const inp = document.getElementById('password');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  }
+
+  // Toast
+  function showToast(msg, type = 'error') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => { t.classList.remove('show'); }, 3500);
+  }
+
+  // Login
+  async function handleLogin(e) {
+    e.preventDefault();
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('submitBtn');
+    const btnText  = document.getElementById('btnText');
+    const spinner  = document.getElementById('btnSpinner');
+    const errMsg   = document.getElementById('errMsg');
+
+    errMsg.classList.add('hidden');
+
+    if (!email || !password) {
+      showErr('Please fill in all fields.');
+      return;
+    }
+
+    // Loading state
+    btn.disabled = true;
+    btnText.textContent = 'Authenticating…';
+    spinner.classList.remove('hidden');
+
+    try {
+      const res = await fetch('https://loanapplication-712h.onrender.com/api/admin/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Store token/session
+        localStorage.setItem('adminToken', data.token || data.accessToken || 'authenticated');
+        localStorage.setItem('adminName',  data.name  || data.email || email);
+
+        showToast('Authentication successful. Redirecting…', 'success');
+
+        // Success animation
+        btn.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
+        btnText.textContent = '✓ Access Granted';
+        spinner.classList.add('hidden');
+
+        setTimeout(() => {
+          // Transition animation
+          document.querySelector('main').style.transition = 'opacity 0.5s';
+          document.querySelector('main').style.opacity = '0';
+          setTimeout(() => { window.location.href = 'admindash.html'; }, 500);
+        }, 900);
+
+      } else {
+        throw new Error(data.message || 'Invalid credentials');
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btnText.textContent = 'Access Dashboard';
+      spinner.classList.add('hidden');
+      showErr(err.message || 'Connection failed. Is the server running?');
+      document.getElementById('loginForm').classList.add('shake');
+      setTimeout(() => document.getElementById('loginForm').classList.remove('shake'), 400);
+    }
+  }
+
+  function showErr(msg) {
+    const el = document.getElementById('errMsg');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+  }
+</script>
+</body>
+</html>
