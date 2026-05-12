@@ -1,1319 +1,1532 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Loanify – My Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Loanify — My Dashboard</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root{
-  --gold:#D4A853;--gold-light:#F0C97A;--gold-dim:rgba(212,168,83,.12);
-  --navy:#0A1628;--navy-mid:#0F2044;--navy-card:#13203A;--navy-deep:#0D1A30;
-  --border:#1E3058;--silver:#B8C5D6;--teal:#2DD4BF;--danger:#F87171;
-  --sidebar-w:260px;
+  --gold:#D4A853;--gold-l:#F0C97A;--gold-dim:rgba(212,168,83,.10);
+  --navy:#090f1e;--navy-2:#0d1729;--navy-3:#111f38;--navy-4:#162344;
+  --border:rgba(30,52,90,.9);--border-gold:rgba(212,168,83,.22);
+  --silver:#9fb3cc;--text:#dde8f8;
+  --green:#2dd4bf;--red:#f87171;--amber:#fbbf24;
+  --sidebar:260px;
 }
-*{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--navy);color:#E8EEF8;overflow-x:hidden;}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--navy);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--navy-2)}::-webkit-scrollbar-thumb{background:var(--navy-4);border-radius:2px}
 
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:5px;height:5px;}
-::-webkit-scrollbar-track{background:var(--navy);}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+/* BG */
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(212,168,83,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(212,168,83,.028) 1px,transparent 1px);
+  background-size:44px 44px}
+.orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}
 
-/* ── SIDEBAR ── */
+/* SIDEBAR */
 #sidebar{
-  position:fixed;top:0;left:0;height:100%;width:var(--sidebar-w);
-  background:linear-gradient(180deg,var(--navy-mid) 0%,var(--navy-deep) 100%);
+  position:fixed;inset-y:0;left:0;width:var(--sidebar);z-index:100;
+  background:linear-gradient(180deg,#0c1a30 0%,#090f1e 100%);
   border-right:1px solid var(--border);
-  z-index:200;display:flex;flex-direction:column;
-  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+  transition:transform .28s cubic-bezier(.4,0,.2,1);will-change:transform;
 }
-@media(max-width:768px){
-  #sidebar{transform:translateX(-100%);}
-  #sidebar.open{transform:translateX(0);}
-}
-#sidebar-overlay{
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:190;backdrop-filter:blur(3px);
-}
-#sidebar-overlay.show{display:block;}
+#sidebar.off{transform:translateX(-100%)}
 
-.nav-item{
-  display:flex;align-items:center;gap:12px;padding:11px 20px;
-  border-radius:12px;margin:2px 12px;cursor:pointer;
-  color:var(--silver);font-size:.875rem;font-weight:500;
-  transition:all .2s;position:relative;
+.nav-link{
+  display:flex;align-items:center;gap:11px;padding:10px 16px;border-radius:11px;
+  margin:1px 8px;cursor:pointer;font-size:.855rem;font-weight:500;color:var(--silver);
+  transition:background .18s,color .18s;position:relative;user-select:none;
 }
-.nav-item:hover{background:rgba(212,168,83,.08);color:#E8EEF8;}
-.nav-item.active{
-  background:linear-gradient(135deg,rgba(212,168,83,.18),rgba(212,168,83,.06));
-  color:var(--gold);border:1px solid rgba(212,168,83,.2);
-}
-.nav-item.active::before{
-  content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);
-  width:3px;height:60%;background:var(--gold);border-radius:0 2px 2px 0;
-}
-.nav-badge{
-  margin-left:auto;background:var(--gold);color:var(--navy);
-  font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px;
-}
+.nav-link:hover{background:rgba(212,168,83,.07);color:var(--text)}
+.nav-link.on{background:rgba(212,168,83,.13);color:var(--gold)}
+.nav-link.on::before{content:'';position:absolute;left:0;top:22%;height:56%;width:3px;background:var(--gold);border-radius:0 2px 2px 0}
+.nav-link .nb{margin-left:auto;background:var(--gold);color:var(--navy);font-size:.62rem;font-weight:800;padding:1px 6px;border-radius:99px;min-width:18px;text-align:center}
+.nav-link.danger{color:#f87177}
+.nav-link.danger:hover{background:rgba(248,113,113,.08);color:var(--red)}
 
-/* ── TOPBAR ── */
+/* TOPBAR */
 #topbar{
-  position:fixed;top:0;left:var(--sidebar-w);right:0;height:64px;
-  background:rgba(13,26,48,.92);backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--border);z-index:150;
-  display:flex;align-items:center;padding:0 24px;gap:16px;
-}
-@media(max-width:768px){#topbar{left:0;}}
-
-/* ── CONTENT ── */
-#content{
-  margin-left:var(--sidebar-w);margin-top:64px;
-  min-height:calc(100vh - 64px);padding:28px;
-}
-@media(max-width:768px){#content{margin-left:0;padding:16px;}}
-
-/* ── SECTION ── */
-.section{display:none;}
-.section.active{display:block;animation:fadeUp .35s cubic-bezier(.4,0,.2,1);}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
-
-/* ── CARDS ── */
-.card{
-  background:var(--navy-card);border:1px solid var(--border);
-  border-radius:20px;padding:24px;
-}
-.stat-card{
-  background:var(--navy-card);border:1px solid var(--border);
-  border-radius:16px;padding:20px;position:relative;overflow:hidden;
-  transition:transform .2s,box-shadow .2s;
-}
-.stat-card:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.3);}
-.stat-card::before{
-  content:'';position:absolute;top:-30px;right:-30px;
-  width:100px;height:100px;border-radius:50%;
-  background:radial-gradient(circle,rgba(212,168,83,.12),transparent 70%);
+  position:sticky;top:0;z-index:50;height:60px;
+  background:rgba(9,15,30,.92);backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:12px;
 }
 
-/* ── INPUTS ── */
-.inp{
-  width:100%;background:rgba(10,22,40,.8);border:1.5px solid var(--border);
-  color:#E8EEF8;border-radius:12px;padding:11px 14px;font-family:'Outfit',sans-serif;
-  font-size:.875rem;transition:border-color .2s,box-shadow .2s;
+/* MAIN */
+#main{margin-left:var(--sidebar);min-height:100vh;position:relative;z-index:1;transition:margin-left .28s}
+
+/* SECTION */
+.sec{display:none;padding:22px 24px;animation:fadeUp .3s ease}
+.sec.on{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS */
+.card{background:var(--navy-3);border:1px solid var(--border);border-radius:18px;padding:22px}
+.card-xs{background:var(--navy-3);border:1px solid var(--border);border-radius:13px;padding:15px}
+.gcard{background:linear-gradient(135deg,rgba(212,168,83,.10) 0%,rgba(212,168,83,.03) 100%);border:1px solid var(--border-gold);border-radius:18px;padding:22px}
+
+/* STAT */
+.stat{background:var(--navy-4);border:1px solid var(--border);border-radius:15px;padding:18px;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(212,168,83,.06),transparent);pointer-events:none}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;border-radius:11px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;border:none;transition:transform .14s,box-shadow .2s,opacity .2s}
+.btn-p{background:linear-gradient(135deg,var(--gold),var(--gold-l));color:var(--navy);padding:10px 20px;font-size:.855rem;box-shadow:0 4px 18px rgba(212,168,83,.28)}
+.btn-p:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 7px 26px rgba(212,168,83,.42)}
+.btn-p:disabled{opacity:.55;cursor:not-allowed}
+.btn-o{background:transparent;border:1.5px solid var(--border);color:var(--silver);padding:9px 18px;font-size:.855rem}
+.btn-o:hover:not(:disabled){border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+.btn-sm{padding:7px 14px;font-size:.79rem;border-radius:9px}
+.btn-xs{padding:5px 10px;font-size:.74rem;border-radius:7px}
+
+/* INPUTS */
+.inp{background:rgba(9,15,30,.85);border:1.5px solid var(--border);color:var(--text);border-radius:10px;padding:10px 14px;font-size:.86rem;font-family:'Outfit',sans-serif;width:100%;transition:border-color .2s,box-shadow .2s}
+.inp:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,168,83,.11)}
+.inp::placeholder{color:#2e4a68}
+.inp:disabled{opacity:.45;cursor:not-allowed}
+select.inp option{background:var(--navy-3)}
+.lbl{color:var(--silver);font-size:.74rem;font-weight:600;letter-spacing:.055em;text-transform:uppercase;display:block;margin-bottom:5px}
+
+/* SPINNER */
+.sp{border-radius:50%;animation:spin .65s linear infinite;flex-shrink:0}
+.sp::before,.sp::after{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sp-sm{width:17px;height:17px;border:2.5px solid rgba(212,168,83,.2);border-top-color:var(--gold)}
+.sp-md{width:30px;height:30px;border:3px solid rgba(212,168,83,.2);border-top-color:var(--gold)}
+.sp-lg{width:46px;height:46px;border:4px solid rgba(212,168,83,.2);border-top-color:var(--gold)}
+
+/* SKELETON */
+.sk{background:linear-gradient(90deg,var(--navy-4) 25%,rgba(22,35,68,.7) 50%,var(--navy-4) 75%);background-size:200% 100%;animation:sk 1.4s infinite;border-radius:7px}
+@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;font-size:.7rem;font-weight:700;letter-spacing:.03em;white-space:nowrap}
+.b-green{background:rgba(45,212,191,.1);color:var(--green);border:1px solid rgba(45,212,191,.25)}
+.b-gold{background:rgba(212,168,83,.12);color:var(--gold-l);border:1px solid rgba(212,168,83,.28)}
+.b-red{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.24)}
+.b-silver{background:rgba(159,179,204,.08);color:var(--silver);border:1px solid rgba(159,179,204,.18)}
+.b-amber{background:rgba(251,191,36,.1);color:var(--amber);border:1px solid rgba(251,191,36,.25)}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;border-radius:13px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.83rem}
+thead tr{background:rgba(22,35,68,.7)}
+thead th{padding:11px 15px;text-align:left;color:var(--silver);font-weight:600;font-size:.72rem;letter-spacing:.055em;text-transform:uppercase;white-space:nowrap}
+tbody tr{border-top:1px solid var(--border);transition:background .13s}
+tbody tr:hover{background:rgba(212,168,83,.035)}
+tbody td{padding:12px 15px;color:#c8d8ee;white-space:nowrap}
+
+/* MODAL */
+.modal{position:fixed;inset:0;z-index:300;background:rgba(5,10,20,.8);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:14px}
+.modal.open{display:flex}
+.modal-box{background:var(--navy-3);border:1px solid var(--border);border-radius:22px;padding:26px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.7)}
+
+/* AJAX OVERLAY */
+#ovl{position:fixed;inset:0;z-index:9999;background:rgba(5,10,20,.88);backdrop-filter:blur(8px);display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+#ovl.on{display:flex}
+
+/* TOAST */
+#toasts{position:fixed;top:14px;right:14px;z-index:10000;display:flex;flex-direction:column;gap:7px;max-width:330px}
+.toast{padding:11px 16px;border-radius:12px;font-size:.82rem;font-weight:500;display:flex;align-items:center;gap:10px;animation:tIn .28s ease;box-shadow:0 6px 24px rgba(0,0,0,.45);border:1px solid}
+.t-ok{background:rgba(45,212,191,.09);border-color:rgba(45,212,191,.28);color:var(--green)}
+.t-err{background:rgba(248,113,113,.09);border-color:rgba(248,113,113,.28);color:var(--red)}
+.t-info{background:rgba(212,168,83,.09);border-color:rgba(212,168,83,.28);color:var(--gold-l)}
+@keyframes tIn{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+
+/* LOGO */
+.logo-t{font-family:'Playfair Display',serif;font-weight:900}
+.grad{background:linear-gradient(135deg,var(--gold),var(--gold-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.anim-g{background:linear-gradient(90deg,var(--gold),var(--gold-l),#fff,var(--gold));background-size:300% 100%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:ga 4s linear infinite}
+@keyframes ga{0%{background-position:0%}100%{background-position:300%}}
+
+/* PROGRESS RING */
+.ring-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--navy-4);stroke-width:9}
+.ring-fill{fill:none;stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1)}
+.ring-inner{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,rgba(212,168,83,.09) 0%,rgba(45,212,191,.05) 100%);border:1px solid var(--border-gold);border-radius:20px;padding:26px 28px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50px;right:-50px;width:220px;height:220px;background:radial-gradient(circle,rgba(212,168,83,.14),transparent 70%);border-radius:50%;animation:orb1 7s ease-in-out infinite alternate}
+.hero::after{content:'';position:absolute;bottom:-60px;left:30%;width:180px;height:180px;background:radial-gradient(circle,rgba(45,212,191,.08),transparent 70%);border-radius:50%;animation:orb1 9s ease-in-out infinite alternate-reverse}
+@keyframes orb1{0%{transform:translate(0,0)}100%{transform:translate(20px,-18px)}}
+
+/* PROG BAR */
+.pbar{height:5px;background:var(--navy-4);border-radius:3px;overflow:hidden}
+.pfill{height:100%;border-radius:3px;transition:width .9s cubic-bezier(.4,0,.2,1)}
+
+/* LOAN TYPE PILL */
+.ltp{padding:7px 16px;border-radius:99px;border:1.5px solid var(--border);font-size:.79rem;font-weight:500;cursor:pointer;transition:all .18s;color:var(--silver);background:transparent;white-space:nowrap}
+.ltp.on,.ltp:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+
+/* QUICK ACTION */
+.qa{background:var(--navy-4);border:1px solid var(--border);border-radius:15px;padding:18px;text-align:center;cursor:pointer;transition:border-color .2s,transform .15s}
+.qa:hover{border-color:var(--border-gold);transform:translateY(-2px)}
+
+/* MOBILE NAV */
+#mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(13,23,45,.97);border-top:1px solid var(--border);backdrop-filter:blur(18px)}
+.mob-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px;cursor:pointer;color:var(--silver);font-size:.6rem;font-weight:500;border:none;background:none;transition:color .18s}
+.mob-btn.on{color:var(--gold)}
+
+/* SIDEBAR BACKDROP */
+#sb-bg{display:none;position:fixed;inset:0;z-index:99;background:rgba(5,10,20,.55);backdrop-filter:blur(2px)}
+
+/* HAMBURGER */
+#hbg{display:none;background:none;border:none;cursor:pointer;color:var(--silver);padding:4px}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  #main{margin-left:0!important;padding-bottom:70px}
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.on{transform:translateX(0)}
+  #mob-nav{display:flex}
+  #hbg{display:flex}
+  .sec{padding:14px 14px}
 }
-.inp:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,168,83,.12);}
-.inp::placeholder{color:#3A5070;}
-.inp:disabled{opacity:.5;cursor:not-allowed;}
-.lbl{color:var(--silver);font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:6px;}
-.fg{margin-bottom:16px;}
 
-/* ── BUTTONS ── */
-.btn-gold{
-  background:linear-gradient(135deg,var(--gold),var(--gold-light));
-  color:var(--navy);font-weight:700;padding:11px 22px;border-radius:12px;
-  border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:.875rem;
-  transition:all .2s;box-shadow:0 4px 16px rgba(212,168,83,.3);
-  display:inline-flex;align-items:center;gap:8px;
-}
-.btn-gold:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 24px rgba(212,168,83,.4);}
-.btn-gold:disabled{opacity:.6;cursor:not-allowed;}
-.btn-outline{
-  background:transparent;border:1.5px solid var(--border);color:var(--silver);
-  padding:10px 20px;border-radius:12px;cursor:pointer;font-family:'Outfit',sans-serif;
-  font-size:.875rem;transition:all .2s;display:inline-flex;align-items:center;gap:8px;
-}
-.btn-outline:hover{border-color:var(--gold);color:var(--gold);}
+/* STATUS dot pulse */
+.dot-pulse{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(45,212,191,.5);animation:dp 1.8s ease-in-out infinite}
+@keyframes dp{0%,100%{box-shadow:0 0 0 0 rgba(45,212,191,.5)}50%{box-shadow:0 0 0 7px rgba(45,212,191,0)}}
 
-/* ── SPINNER ── */
-.spin{width:20px;height:20px;border:2.5px solid rgba(212,168,83,.2);border-top-color:var(--gold);border-radius:50%;animation:rot .7s linear infinite;}
-.spin-lg{width:48px;height:48px;border-width:4px;}
-@keyframes rot{to{transform:rotate(360deg);}}
+/* DIVIDER */
+.div-l{display:flex;align-items:center;gap:10px;color:#1e3458;font-size:.72rem}
+.div-l::before,.div-l::after{content:'';flex:1;height:1px;background:var(--border)}
 
-/* ── AJAX OVERLAY ── */
-#ajax-overlay{
-  position:fixed;inset:0;z-index:9999;
-  background:rgba(10,22,40,.88);backdrop-filter:blur(8px);
-  display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;
-}
-#ajax-overlay.show{display:flex;}
+/* LOAN CARD (mobile-friendly) */
+.loan-card{background:var(--navy-4);border:1px solid var(--border);border-radius:14px;padding:16px;transition:border-color .18s,transform .15s;cursor:pointer}
+.loan-card:hover{border-color:var(--border-gold);transform:translateY(-1px)}
 
-/* ── TOAST ── */
-#toasts{position:fixed;top:76px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:10px;max-width:340px;}
-.toast{
-  padding:13px 16px;border-radius:12px;font-size:.82rem;font-weight:500;
-  display:flex;align-items:center;gap:10px;animation:tin .3s ease;
-  box-shadow:0 8px 28px rgba(0,0,0,.4);border:1px solid;
-}
-.toast.ok{background:rgba(45,212,191,.1);border-color:rgba(45,212,191,.3);color:var(--teal);}
-.toast.err{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:var(--danger);}
-.toast.inf{background:rgba(212,168,83,.1);border-color:rgba(212,168,83,.3);color:var(--gold-light);}
-@keyframes tin{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
-
-/* ── BADGE ── */
-.badge{
-  display:inline-flex;align-items:center;gap:4px;padding:3px 10px;
-  border-radius:20px;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;
-}
-.badge-green{background:rgba(45,212,191,.12);color:var(--teal);border:1px solid rgba(45,212,191,.25);}
-.badge-gold{background:rgba(212,168,83,.12);color:var(--gold);border:1px solid rgba(212,168,83,.25);}
-.badge-red{background:rgba(248,113,113,.12);color:var(--danger);border:1px solid rgba(248,113,113,.25);}
-.badge-blue{background:rgba(96,165,250,.12);color:#60A5FA;border:1px solid rgba(96,165,250,.25);}
-
-/* ── TABLE ── */
-.tbl{width:100%;border-collapse:collapse;}
-.tbl th{color:var(--silver);font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);}
-.tbl td{padding:13px 14px;font-size:.83rem;border-bottom:1px solid rgba(30,48,88,.5);}
-.tbl tr:hover td{background:rgba(212,168,83,.03);}
-.tbl-wrap{overflow-x:auto;border-radius:16px;border:1px solid var(--border);}
-
-/* ── MODAL ── */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:500;display:none;align-items:center;justify-content:center;padding:16px;}
-.modal-bg.show{display:flex;}
-.modal{background:var(--navy-card);border:1px solid var(--border);border-radius:24px;padding:28px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;animation:fadeUp .3s ease;}
-
-/* ── LOGO ── */
-.logo-grd{background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-
-/* ── CREDIT RING ── */
-.credit-ring{position:relative;display:inline-flex;align-items:center;justify-content:center;}
-.credit-ring svg{transform:rotate(-90deg);}
-.credit-ring .score-val{position:absolute;text-align:center;}
-
-/* ── EMI RESULT CARD ── */
-.emi-result{
-  background:linear-gradient(135deg,rgba(212,168,83,.1),rgba(212,168,83,.04));
-  border:1px solid rgba(212,168,83,.25);border-radius:16px;padding:20px;
-}
-
-/* ── LOAN CARD ── */
-.loan-card{
-  background:var(--navy-card);border:1px solid var(--border);border-radius:16px;padding:20px;
-  transition:all .2s;cursor:pointer;
-}
-.loan-card:hover{border-color:rgba(212,168,83,.3);box-shadow:0 8px 32px rgba(0,0,0,.25);}
-
-/* ── HERO ANIMATION ── */
-.hero-bg{
-  background:linear-gradient(135deg,rgba(212,168,83,.08) 0%,transparent 50%,rgba(45,212,191,.05) 100%);
-  border:1px solid rgba(212,168,83,.15);
-  border-radius:24px;
-  position:relative;overflow:hidden;
-}
-.hero-bg::before{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 60% 80% at 80% 50%,rgba(212,168,83,.07),transparent);
-  pointer-events:none;
-}
-
-/* ── PULSE DOT ── */
-.pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);position:relative;}
-.pulse-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;background:rgba(45,212,191,.3);animation:pdot 1.5s ease-out infinite;}
-@keyframes pdot{0%{transform:scale(1);opacity:.7;}100%{transform:scale(2.5);opacity:0;}}
-
-/* ── SECTION HEADER ── */
-.sec-hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;}
-.sec-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;}
-
-/* ── GRID HELPERS ── */
-.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
-.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
-@media(max-width:900px){.g4{grid-template-columns:repeat(2,1fr);}.g3{grid-template-columns:repeat(2,1fr);}}
-@media(max-width:540px){.g2,.g3,.g4{grid-template-columns:1fr;}}
-
-/* ── PROGRESS BAR ── */
-.pbar{height:6px;background:var(--border);border-radius:4px;overflow:hidden;}
-.pbar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),var(--gold-light));transition:width .6s cubic-bezier(.4,0,.2,1);}
-
-/* floating coins animation */
-@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
-.float-anim{animation:float 3s ease-in-out infinite;}
-
-/* tab underline */
-.tab{padding:9px 18px;font-size:.85rem;font-weight:600;cursor:pointer;color:var(--silver);border-bottom:2px solid transparent;transition:all .2s;}
-.tab.on{color:var(--gold);border-bottom-color:var(--gold);}
+/* EMPTY STATE */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px;gap:12px;color:var(--silver);text-align:center}
+.empty svg{opacity:.3;margin-bottom:4px}
 </style>
 </head>
 <body>
 
-<!-- AJAX OVERLAY -->
-<div id="ajax-overlay">
-  <div class="spin spin-lg"></div>
-  <p id="ajax-txt" style="color:var(--silver);font-size:.9rem;letter-spacing:.05em;margin-top:4px;">Loading…</p>
-</div>
+<!-- BG -->
+<div class="bg-grid"></div>
+<div class="orb" style="width:480px;height:480px;background:radial-gradient(circle,rgba(212,168,83,.10),transparent);top:-120px;left:-80px;"></div>
+<div class="orb" style="width:360px;height:360px;background:radial-gradient(circle,rgba(45,212,191,.07),transparent);bottom:-80px;right:-60px;"></div>
 
-<!-- SIDEBAR OVERLAY (mobile) -->
-<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+<!-- AJAX OVERLAY -->
+<div id="ovl">
+  <div class="sp sp-lg"></div>
+  <p id="ovl-msg" style="color:var(--silver);font-size:.92rem;letter-spacing:.04em;"></p>
+</div>
 
 <!-- TOASTS -->
 <div id="toasts"></div>
 
-<!-- ══════════════ SIDEBAR ══════════════ -->
-<nav id="sidebar">
+<!-- SIDEBAR BACKDROP -->
+<div id="sb-bg" onclick="closeSB()"></div>
+
+<!-- ══════════════════ SIDEBAR ══════════════════ -->
+<aside id="sidebar">
   <!-- Logo -->
-  <div style="padding:20px 20px 16px;border-bottom:1px solid var(--border);">
+  <div style="padding:18px 18px 12px;border-bottom:1px solid var(--border);">
     <div style="display:flex;align-items:center;gap:10px;">
-      <div style="width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(212,168,83,.2),rgba(212,168,83,.05));border:1.5px solid rgba(212,168,83,.4);">
-        <svg width="20" height="20" viewBox="0 0 26 26" fill="none"><path d="M13 3L22 8V18L13 23L4 18V8L13 3Z" stroke="#D4A853" stroke-width="1.5" fill="rgba(212,168,83,.12)"/><path d="M9 13H17M13 9V17" stroke="#D4A853" stroke-width="2" stroke-linecap="round"/></svg>
+      <div style="width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,rgba(212,168,83,.18),rgba(212,168,83,.06));border:1.5px solid var(--border-gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="19" height="19" viewBox="0 0 26 26" fill="none"><path d="M13 3L22 8V18L13 23L4 18V8L13 3Z" stroke="#D4A853" stroke-width="1.5" fill="rgba(212,168,83,.12)"/><path d="M9 13H17M13 9V17" stroke="#D4A853" stroke-width="2" stroke-linecap="round"/></svg>
       </div>
-      <span style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;" class="logo-grd">Loanify</span>
-    </div>
-    <!-- User pill -->
-    <div id="user-pill" style="margin-top:14px;padding:10px 12px;background:rgba(212,168,83,.06);border:1px solid rgba(212,168,83,.15);border-radius:12px;display:flex;align-items:center;gap:10px;">
-      <div id="avatar" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy);font-size:.9rem;flex-shrink:0;">?</div>
-      <div style="min-width:0;">
-        <div id="sb-name" style="font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#E8EEF8;">Loading…</div>
-        <div class="pulse-dot" style="margin-top:5px;"></div>
+      <div>
+        <div class="logo-t text-xl grad">Loanify</div>
+        <div style="color:#283d5a;font-size:.6rem;letter-spacing:.08em;margin-top:-2px;">SMART LOANS</div>
       </div>
     </div>
   </div>
 
-  <!-- Nav Items -->
-  <div style="flex:1;overflow-y:auto;padding:12px 0;">
-    <div style="padding:0 20px;margin-bottom:8px;font-size:.65rem;color:#3A5070;font-weight:600;letter-spacing:.1em;text-transform:uppercase;">Main Menu</div>
+  <!-- User info -->
+  <div style="padding:12px 14px;border-bottom:1px solid var(--border);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="sb-av" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-l));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy);font-size:.88rem;flex-shrink:0;">?</div>
+      <div style="min-width:0;flex:1;">
+        <div id="sb-name" style="font-weight:600;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);">Loading…</div>
+        <div id="sb-email" style="color:#2e4a68;font-size:.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+      </div>
+      <div class="dot-pulse"></div>
+    </div>
+  </div>
 
-    <div class="nav-item active" onclick="nav('dashboard')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+  <!-- Nav -->
+  <div style="flex:1;overflow-y:auto;padding:8px 0;">
+    <div style="padding:7px 16px 4px;font-size:.65rem;color:#253856;font-weight:700;letter-spacing:.1em;text-transform:uppercase;">MAIN</div>
+    <div class="nav-link on" id="nl-overview" onclick="go('overview')">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Dashboard
     </div>
-    <div class="nav-item" onclick="nav('loans')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <div class="nav-link" id="nl-loans" onclick="go('loans')">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       My Loans
-      <span class="nav-badge" id="loan-count-badge">0</span>
+      <span id="loan-nb" class="nb hidden">0</span>
     </div>
-    <div class="nav-item" onclick="nav('apply')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <div class="nav-link" id="nl-apply" onclick="go('apply')">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
       Apply for Loan
     </div>
-    <div class="nav-item" onclick="nav('emi')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    <div class="nav-link" id="nl-emi" onclick="go('emi')">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
       EMI Calculator
     </div>
-    <div class="nav-item" onclick="nav('payments')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    <div class="nav-link" id="nl-payments" onclick="go('payments')">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
       Payments
     </div>
-    <div class="nav-item" onclick="nav('credit')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <div class="nav-link" id="nl-credit" onclick="go('credit')">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       Credit Score
     </div>
 
-    <div style="padding:12px 20px 4px;margin-top:8px;font-size:.65rem;color:#3A5070;font-weight:600;letter-spacing:.1em;text-transform:uppercase;">Account</div>
-    <div class="nav-item" onclick="nav('profile')">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <div style="padding:10px 16px 4px;font-size:.65rem;color:#253856;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:6px;">ACCOUNT</div>
+    <div class="nav-link" id="nl-profile" onclick="go('profile')">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       My Profile
     </div>
   </div>
 
   <!-- Logout -->
-  <div style="padding:12px 0;border-top:1px solid var(--border);">
-    <div class="nav-item" onclick="logout()" style="color:var(--danger);">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+  <div style="padding:10px 8px;border-top:1px solid var(--border);">
+    <div class="nav-link danger" onclick="doLogout()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       Sign Out
     </div>
   </div>
-</nav>
+</aside>
 
-<!-- ══════════════ TOPBAR ══════════════ -->
-<header id="topbar">
-  <button onclick="openSidebar()" class="btn-outline" style="padding:8px;border-radius:10px;display:none;" id="hamburger">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-  </button>
-  <div style="flex:1;">
-    <h1 id="page-title" style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#E8EEF8;">Dashboard</h1>
-    <p id="page-sub" style="font-size:.72rem;color:var(--silver);margin-top:1px;">Welcome back 👋</p>
-  </div>
-  <div style="display:flex;align-items:center;gap:12px;">
-    <!-- Refresh -->
-    <button onclick="refreshSection()" class="btn-outline" style="padding:8px;border-radius:10px;" title="Refresh">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+<!-- ══════════════════ MAIN ══════════════════ -->
+<div id="main">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <button id="hbg" onclick="toggleSB()">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <div id="topbar-avatar" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy);font-size:.85rem;cursor:pointer;" onclick="nav('profile')">?</div>
+    <!-- Page title -->
+    <div style="flex:1;">
+      <span id="tb-title" style="font-weight:700;font-size:.97rem;">Dashboard</span>
+    </div>
+    <!-- Refresh -->
+    <button class="btn btn-o btn-xs" onclick="doRefresh()" style="gap:5px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Refresh
+    </button>
+    <!-- User avatar -->
+    <div id="tb-av" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-l));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy);font-size:.88rem;cursor:pointer;" onclick="go('profile')">?</div>
   </div>
-</header>
 
-<!-- ══════════════ MAIN CONTENT ══════════════ -->
-<main id="content">
-
-  <!-- ─── DASHBOARD ─── -->
-  <section id="sec-dashboard" class="section active">
+  <!-- ════════ OVERVIEW ════════ -->
+  <section id="sec-overview" class="sec on">
     <!-- Hero -->
-    <div class="hero-bg" style="padding:28px;margin-bottom:24px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
-        <div>
-          <p style="color:var(--gold);font-size:.75rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">YOUR FINANCIAL HUB</p>
-          <h2 style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;line-height:1.2;">Hello, <span class="logo-grd" id="hero-name">there</span>!</h2>
-          <p style="color:var(--silver);margin-top:6px;font-size:.88rem;">Here's your complete financial overview</p>
+    <div class="hero mb-5">
+      <div style="position:relative;z-index:1;">
+        <p style="color:var(--gold);font-size:.72rem;font-weight:700;letter-spacing:.11em;text-transform:uppercase;margin-bottom:6px;">WELCOME BACK</p>
+        <h1 class="logo-t" style="font-size:clamp(1.5rem,4vw,2.2rem);line-height:1.2;margin-bottom:6px;">
+          <span id="hero-name" class="anim-g">Loading…</span>
+        </h1>
+        <p style="color:var(--silver);font-size:.88rem;">Your personalised financial snapshot — <span id="today-date"></span></p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;">
+          <button class="btn btn-p btn-sm" onclick="go('apply')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Apply for Loan
+          </button>
+          <button class="btn btn-o btn-sm" onclick="go('emi')">EMI Calculator</button>
+          <button class="btn btn-o btn-sm" onclick="go('payments')">Make Payment</button>
         </div>
-        <div class="float-anim" style="font-size:3.5rem;">🏦</div>
       </div>
     </div>
 
-    <!-- Stat Cards -->
-    <div class="g4" style="margin-bottom:24px;">
-      <div class="stat-card">
-        <p class="lbl" style="margin-bottom:8px;">Active Loans</p>
-        <p id="dash-active-loans" style="font-size:2rem;font-weight:700;font-family:'Playfair Display',serif;color:var(--gold);">–</p>
-        <p style="color:var(--silver);font-size:.75rem;margin-top:4px;">Applications</p>
-      </div>
-      <div class="stat-card">
-        <p class="lbl" style="margin-bottom:8px;">Total Borrowed</p>
-        <p id="dash-total" style="font-size:1.4rem;font-weight:700;color:#E8EEF8;">–</p>
-        <p style="color:var(--silver);font-size:.75rem;margin-top:4px;">Across all loans</p>
-      </div>
-      <div class="stat-card">
-        <p class="lbl" style="margin-bottom:8px;">Credit Score</p>
-        <p id="dash-credit" style="font-size:2rem;font-weight:700;font-family:'Playfair Display',serif;color:var(--teal);">–</p>
-        <p style="color:var(--silver);font-size:.75rem;margin-top:4px;">CIBIL Rating</p>
-      </div>
-      <div class="stat-card">
-        <p class="lbl" style="margin-bottom:8px;">Next EMI</p>
-        <p id="dash-emi" style="font-size:1.4rem;font-weight:700;color:#E8EEF8;">–</p>
-        <p style="color:var(--silver);font-size:.75rem;margin-top:4px;">Monthly payment</p>
-      </div>
+    <!-- STATS -->
+    <div id="stat-row" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+      <div class="stat"><div class="sk h-3 w-14 mb-2"></div><div class="sk h-7 w-16 mb-1"></div><div class="sk h-2.5 w-10"></div></div>
+      <div class="stat"><div class="sk h-3 w-14 mb-2"></div><div class="sk h-7 w-16 mb-1"></div><div class="sk h-2.5 w-10"></div></div>
+      <div class="stat"><div class="sk h-3 w-14 mb-2"></div><div class="sk h-7 w-16 mb-1"></div><div class="sk h-2.5 w-10"></div></div>
+      <div class="stat"><div class="sk h-3 w-14 mb-2"></div><div class="sk h-7 w-16 mb-1"></div><div class="sk h-2.5 w-10"></div></div>
     </div>
 
-    <!-- Recent Loans + Quick Actions -->
-    <div class="g2">
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-          <h3 style="font-weight:600;">Recent Loans</h3>
-          <button onclick="nav('loans')" class="btn-outline" style="padding:6px 12px;font-size:.75rem;">View All</button>
+    <!-- Recent loans + quick actions -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <!-- Recent loans -->
+      <div class="card lg:col-span-2">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <h3 style="font-weight:700;">Recent Applications</h3>
+          <button class="btn btn-o btn-xs" onclick="go('loans')">View All</button>
         </div>
-        <div id="dash-loans-list"><div style="text-align:center;padding:30px;color:var(--silver);"><div class="spin" style="margin:0 auto 10px;"></div>Loading…</div></div>
+        <div id="ov-recent"></div>
       </div>
-      <div class="card">
-        <h3 style="font-weight:600;margin-bottom:18px;">Quick Actions</h3>
+      <!-- Quick actions -->
+      <div>
+        <h3 style="font-weight:700;margin-bottom:12px;">Quick Actions</h3>
         <div style="display:flex;flex-direction:column;gap:10px;">
-          <button onclick="nav('apply')" class="btn-gold" style="width:100%;justify-content:center;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Apply for New Loan
-          </button>
-          <button onclick="nav('emi')" class="btn-outline" style="width:100%;justify-content:center;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            Calculate EMI
-          </button>
-          <button onclick="nav('payments')" class="btn-outline" style="width:100%;justify-content:center;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Make a Payment
-          </button>
-          <button onclick="nav('credit')" class="btn-outline" style="width:100%;justify-content:center;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            Check Credit Score
-          </button>
+          <div class="qa" onclick="go('apply')">
+            <div style="width:40px;height:40px;border-radius:12px;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            </div>
+            <div style="font-weight:600;font-size:.83rem;">New Loan Application</div>
+            <div style="color:var(--silver);font-size:.72rem;margin-top:2px;">Get instant approval</div>
+          </div>
+          <div class="qa" onclick="go('payments');openPayModal()">
+            <div style="width:40px;height:40px;border-radius:12px;background:rgba(251,191,36,.09);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <div style="font-weight:600;font-size:.83rem;">Make a Payment</div>
+            <div style="color:var(--silver);font-size:.72rem;margin-top:2px;">UPI, NEFT, Cards</div>
+          </div>
+          <div class="qa" onclick="go('credit')">
+            <div style="width:40px;height:40px;border-radius:12px;background:rgba(45,212,191,.09);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div style="font-weight:600;font-size:.83rem;">Check Credit Score</div>
+            <div style="color:var(--silver);font-size:.72rem;margin-top:2px;">Know your report</div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-<!-- ─── MY LOANS ─── -->
-  <section id="sec-loans" class="section">
-    <div class="sec-hdr">
-      <h2 class="sec-title">My Loans</h2>
-      <button onclick="nav('apply')" class="btn-gold">+ Apply New</button>
+  <!-- ════════ MY LOANS ════════ -->
+  <section id="sec-loans" class="sec">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;">
+      <div>
+        <h2 style="font-weight:700;font-size:1.2rem;">My Loan Applications</h2>
+        <p style="color:var(--silver);font-size:.83rem;margin-top:2px;">Showing loans linked to your account only</p>
+      </div>
+      <button class="btn btn-p btn-sm" onclick="go('apply')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Application
+      </button>
     </div>
-    <div id="loans-loading" style="text-align:center;padding:60px;"><div class="spin spin-lg" style="margin:0 auto 12px;"></div><p style="color:var(--silver);">Fetching your loans…</p></div>
-    <div id="loans-list" class="hidden"></div>
+
+    <!-- Status filter -->
+    <div id="loan-filters" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+      <button class="ltp on" onclick="filterLoans('ALL',this)">All</button>
+      <button class="ltp" onclick="filterLoans('APPROVED',this)">Approved</button>
+      <button class="ltp" onclick="filterLoans('PENDING',this)">Pending</button>
+      <button class="ltp" onclick="filterLoans('REJECTED',this)">Rejected</button>
+    </div>
+
+    <div id="loans-wrap"></div>
   </section>
 
-  <!-- ─── APPLY LOAN ─── -->
-  <section id="sec-apply" class="section">
-    <div class="sec-hdr">
-      <h2 class="sec-title">Apply for a Loan</h2>
-      <span class="badge badge-gold">Instant Decision</span>
+  <!-- ════════ APPLY ════════ -->
+  <section id="sec-apply" class="sec">
+    <div style="margin-bottom:18px;">
+      <h2 style="font-weight:700;font-size:1.2rem;">Apply for a Loan</h2>
+      <p style="color:var(--silver);font-size:.83rem;margin-top:2px;">Quick application — decision in minutes</p>
     </div>
 
-    <!-- Loan Type Cards -->
-    <div class="g3" style="margin-bottom:24px;" id="loan-type-cards">
-      <div style="text-align:center;padding:30px;grid-column:1/-1;"><div class="spin" style="margin:0 auto 10px;"></div>Loading loan types…</div>
+    <!-- Type pills -->
+    <div style="margin-bottom:18px;">
+      <p class="lbl" style="margin-bottom:10px;">Select Loan Type</p>
+      <div id="type-pills" style="display:flex;flex-wrap:wrap;gap:8px;">
+        <div class="sk h-8 w-24 rounded-full"></div>
+        <div class="sk h-8 w-28 rounded-full"></div>
+        <div class="sk h-8 w-20 rounded-full"></div>
+      </div>
     </div>
 
-    <div class="card">
-      <h3 style="font-weight:600;margin-bottom:20px;">Loan Application Form</h3>
-      <form id="apply-form" onsubmit="submitLoanApp(event)">
-        <div class="g2">
-          <div class="fg">
+    <div class="card" style="max-width:640px;">
+      <form id="apply-form" onsubmit="submitApply(event)">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
             <label class="lbl">Loan Type</label>
-            <select id="a-type" class="inp">
-              <option value="">Select loan type</option>
-              <option>Home Loan</option><option>Personal Loan</option>
-              <option>Business Loan</option><option>Car Loan</option>
-              <option>Education Loan</option><option>Gold Loan</option>
+            <select id="ap-type" class="inp" required>
+              <option value="">Select type…</option>
+              <option>Home Loan</option><option>Personal Loan</option><option>Business Loan</option><option>Education Loan</option><option>Car Loan</option><option>Gold Loan</option>
             </select>
           </div>
-          <div class="fg">
+          <div>
             <label class="lbl">Loan Amount (₹)</label>
-            <input id="a-amount" type="number" class="inp" placeholder="e.g. 500000" min="10000"/>
+            <input id="ap-amt" type="number" class="inp" placeholder="e.g. 500000" min="1000" required/>
           </div>
-          <div class="fg">
-            <label class="lbl">Interest Rate (%)</label>
-            <input id="a-rate" type="number" class="inp" placeholder="e.g. 8.5" step="0.1" min="1" max="36"/>
+          <div>
+            <label class="lbl">Interest Rate (% p.a.)</label>
+            <input id="ap-rate" type="number" step="0.1" class="inp" placeholder="e.g. 8.5" min="1" max="36" required/>
           </div>
-          <div class="fg">
+          <div>
             <label class="lbl">Tenure (Months)</label>
-            <input id="a-tenure" type="number" class="inp" placeholder="e.g. 60" min="3" max="360"/>
+            <input id="ap-tenure" type="number" class="inp" placeholder="e.g. 60" min="1" max="360" required/>
           </div>
-          <div class="fg">
+          <div>
             <label class="lbl">Monthly Income (₹)</label>
-            <input id="a-income" type="number" class="inp" placeholder="e.g. 75000"/>
+            <input id="ap-income" type="number" class="inp" placeholder="e.g. 75000" min="1" required/>
           </div>
-          <div class="fg">
+          <div>
             <label class="lbl">Employment Type</label>
-            <select id="a-emp" class="inp">
-              <option value="">Select type</option>
-              <option>Salaried</option><option>Self-Employed</option>
-              <option>Business Owner</option><option>Freelancer</option>
+            <select id="ap-emp" class="inp" required>
+              <option value="">Select…</option>
+              <option>Salaried</option><option>Self-Employed</option><option>Business Owner</option><option>Freelancer</option><option>Government Employee</option>
             </select>
           </div>
+          <div style="grid-column:1/-1;">
+            <label class="lbl">Loan Purpose</label>
+            <input id="ap-purpose" type="text" class="inp" placeholder="Brief description of loan purpose…" required/>
+          </div>
         </div>
-        <div class="fg">
-          <label class="lbl">Loan Purpose</label>
-          <input id="a-purpose" type="text" class="inp" placeholder="Briefly describe loan purpose"/>
+
+        <!-- Live EMI preview -->
+        <div id="ap-emi-preview" style="display:none;margin-top:14px;background:var(--gold-dim);border:1px solid var(--border-gold);border-radius:11px;padding:14px;">
+          <p style="color:var(--silver);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Estimated Monthly EMI</p>
+          <p id="ap-emi-val" class="logo-t" style="font-size:1.7rem;color:var(--gold);"></p>
+          <p style="color:var(--silver);font-size:.74rem;margin-top:3px;">Total payable: <span id="ap-total-val" style="color:var(--text);font-weight:600;"></span></p>
         </div>
-        <div style="display:flex;gap:12px;margin-top:8px;">
-          <button type="submit" class="btn-gold" id="apply-btn">
+
+        <p id="apply-err" style="color:var(--red);font-size:.8rem;margin-top:10px;display:none;"></p>
+        <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;">
+          <button type="submit" id="apply-btn" class="btn btn-p" style="min-width:160px;">
             <span id="apply-txt">Submit Application</span>
-            <div id="apply-spin" class="spin hidden"></div>
+            <div id="apply-sp" class="sp sp-sm" style="display:none;"></div>
           </button>
-          <button type="button" onclick="this.closest('form').reset()" class="btn-outline">Reset</button>
+          <button type="button" class="btn btn-o" onclick="resetApply()">Reset</button>
         </div>
       </form>
     </div>
   </section>
 
-  <!-- ─── EMI CALCULATOR ─── -->
-  <section id="sec-emi" class="section">
-    <div class="sec-hdr">
-      <h2 class="sec-title">EMI Calculator</h2>
-      <span class="badge badge-green">Live Calculation</span>
+  <!-- ════════ EMI ════════ -->
+  <section id="sec-emi" class="sec">
+    <div style="margin-bottom:18px;">
+      <h2 style="font-weight:700;font-size:1.2rem;">EMI Calculator</h2>
+      <p style="color:var(--silver);font-size:.83rem;margin-top:2px;">Plan your loan repayments before applying</p>
     </div>
-    <div class="g2">
-      <!-- Calculator Form -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <!-- Form -->
       <div class="card">
-        <h3 style="font-weight:600;margin-bottom:18px;">Calculate Monthly EMI</h3>
-        <div class="fg">
-          <label class="lbl">Loan Application ID</label>
-          <input id="e-appid" type="number" class="inp" placeholder="e.g. 101"/>
-        </div>
-        <div class="fg">
-          <label class="lbl">Principal Amount (₹)</label>
-          <input id="e-principal" type="number" class="inp" placeholder="e.g. 500000" oninput="liveEmi()"/>
-        </div>
-        <div class="fg">
-          <label class="lbl">Interest Rate (% per annum)</label>
-          <input id="e-rate" type="number" class="inp" placeholder="e.g. 10.5" step="0.1" oninput="liveEmi()"/>
-        </div>
-        <div class="fg">
-          <label class="lbl">Tenure (Months)</label>
-          <input id="e-tenure" type="number" class="inp" placeholder="e.g. 60" oninput="liveEmi()"/>
-        </div>
-        <div style="display:flex;gap:10px;">
-          <button onclick="calcEmi()" class="btn-gold" id="emi-btn">
-            <span id="emi-txt">Calculate via API</span>
-            <div id="emi-spin" class="spin hidden"></div>
+        <h3 style="font-weight:700;margin-bottom:16px;">Calculate EMI</h3>
+        <form id="emi-form" onsubmit="calcEMI(event)">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div><label class="lbl">Your Loan Application ID</label><input id="e-lid" type="number" class="inp" placeholder="e.g. 101" required/></div>
+            <div><label class="lbl">Principal Amount (₹)</label><input id="e-p" type="number" class="inp" placeholder="e.g. 500000" oninput="liveEMI()" required/></div>
+            <div><label class="lbl">Annual Interest Rate (%)</label><input id="e-r" type="number" step="0.1" class="inp" placeholder="e.g. 10.5" oninput="liveEMI()" required/></div>
+            <div><label class="lbl">Tenure (Months)</label><input id="e-t" type="number" class="inp" placeholder="e.g. 60" oninput="liveEMI()" required/></div>
+          </div>
+          <!-- Live -->
+          <div id="e-live" style="display:none;margin-top:14px;background:var(--gold-dim);border:1px solid var(--border-gold);border-radius:11px;padding:14px;">
+            <p style="color:var(--silver);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">LIVE ESTIMATE</p>
+            <p id="e-live-val" class="logo-t" style="font-size:1.8rem;color:var(--gold);"></p>
+            <p style="color:var(--silver);font-size:.73rem;margin-top:2px;">per month</p>
+          </div>
+          <p id="emi-err" style="color:var(--red);font-size:.8rem;margin-top:8px;display:none;"></p>
+          <button type="submit" id="emi-btn" class="btn btn-p" style="margin-top:16px;min-width:150px;">
+            <span id="emi-txt">Calculate & Save</span>
+            <div id="emi-sp" class="sp sp-sm" style="display:none;"></div>
           </button>
-          <button onclick="fetchEmiById()" class="btn-outline">Fetch EMI by ID</button>
+        </form>
+
+        <!-- Fetch existing -->
+        <div style="border-top:1px solid var(--border);margin-top:20px;padding-top:16px;">
+          <p class="lbl" style="margin-bottom:8px;">Fetch Saved EMI for your Loan</p>
+          <div style="display:flex;gap:8px;">
+            <input id="e-fid" type="number" class="inp" placeholder="Loan App ID" style="flex:1;"/>
+            <button class="btn btn-o btn-sm" onclick="fetchEMI()">Fetch</button>
+          </div>
+          <div id="e-fetched" style="margin-top:10px;"></div>
         </div>
       </div>
-      <!-- Results -->
-      <div>
-        <!-- Live preview -->
-        <div class="emi-result" style="margin-bottom:16px;">
-          <p style="color:var(--gold);font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;">Live Preview</p>
-          <div class="g2" style="gap:12px;">
-            <div>
-              <p style="color:var(--silver);font-size:.72rem;margin-bottom:4px;">Monthly EMI</p>
-              <p id="live-emi" style="font-size:1.5rem;font-weight:700;color:var(--gold);">₹ –</p>
-            </div>
-            <div>
-              <p style="color:var(--silver);font-size:.72rem;margin-bottom:4px;">Total Interest</p>
-              <p id="live-interest" style="font-size:1.5rem;font-weight:700;color:#E8EEF8;">₹ –</p>
-            </div>
-            <div>
-              <p style="color:var(--silver);font-size:.72rem;margin-bottom:4px;">Total Amount</p>
-              <p id="live-total" style="font-size:1.5rem;font-weight:700;color:#E8EEF8;">₹ –</p>
-            </div>
-            <div>
-              <p style="color:var(--silver);font-size:.72rem;margin-bottom:4px;">Tenure</p>
-              <p id="live-tenure" style="font-size:1.5rem;font-weight:700;color:#E8EEF8;">–</p>
-            </div>
+
+      <!-- Result -->
+      <div class="card">
+        <h3 style="font-weight:700;margin-bottom:14px;">Breakdown</h3>
+        <div id="emi-result">
+          <div class="empty">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            <p>Enter details and tap <strong style="color:var(--gold);">Calculate</strong></p>
           </div>
-          <!-- Principal vs Interest bar -->
-          <div style="margin-top:16px;">
-            <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--silver);margin-bottom:6px;">
-              <span>Principal</span><span>Interest</span>
-            </div>
-            <div style="height:8px;border-radius:4px;background:var(--border);overflow:hidden;display:flex;">
-              <div id="pbar-principal" style="height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:4px 0 0 4px;transition:width .5s;width:0%;"></div>
-              <div id="pbar-interest"  style="height:100%;background:linear-gradient(90deg,rgba(248,113,113,.7),rgba(248,113,113,.4));flex:1;"></div>
-            </div>
-          </div>
-        </div>
-        <!-- API Result -->
-        <div id="emi-api-result" class="card hidden">
-          <p style="color:var(--teal);font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;">✅ API Result</p>
-          <div id="emi-api-content"></div>
         </div>
       </div>
     </div>
   </section>
-  <!-- ─── PAYMENTS ─── -->
-  <section id="sec-payments" class="section">
-    <div class="sec-hdr">
-      <h2 class="sec-title">Payments</h2>
-      <button onclick="openPayModal()" class="btn-gold">+ Make Payment</button>
+
+  <!-- ════════ PAYMENTS ════════ -->
+  <section id="sec-payments" class="sec">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;">
+      <div>
+        <h2 style="font-weight:700;font-size:1.2rem;">Payments</h2>
+        <p style="color:var(--silver);font-size:.83rem;margin-top:2px;">View history for your loans & make new payments</p>
+      </div>
+      <button class="btn btn-p btn-sm" onclick="openPayModal()">+ Make Payment</button>
     </div>
-    <div class="card" style="margin-bottom:20px;">
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <input id="pay-fetch-id" type="number" class="inp" placeholder="Loan Application ID" style="max-width:220px;"/>
-        <button onclick="fetchPayments()" class="btn-gold" id="pay-fetch-btn">
-          <span>Fetch Payments</span>
-          <div id="pay-fetch-spin" class="spin hidden"></div>
+
+    <!-- Fetch by loan app ID -->
+    <div class="card-xs" style="margin-bottom:16px;">
+      <p class="lbl" style="margin-bottom:8px;">Look up payments for a loan</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input id="pf-id" type="number" class="inp" placeholder="Enter your Loan App ID…" style="flex:1;min-width:140px;"/>
+        <button class="btn btn-p btn-sm" onclick="fetchPay()" id="pf-btn">
+          <span id="pf-txt">Fetch Payments</span>
+          <div id="pf-sp" class="sp sp-sm" style="display:none;"></div>
         </button>
       </div>
     </div>
-    <div id="payments-result"></div>
+    <div id="pay-list">
+      <div class="empty" style="border:1px solid var(--border);border-radius:13px;">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <p>Enter your Loan Application ID above to fetch payments</p>
+      </div>
+    </div>
   </section>
 
 
 
- <!-- ─── PROFILE ─── -->
-  <section id="sec-profile" class="section">
-    <div class="sec-hdr">
-      <h2 class="sec-title">My Profile</h2>
-      <button onclick="openEditModal()" class="btn-gold">Edit Profile</button>
+  <!-- ════════ PROFILE ════════ -->
+  <section id="sec-profile" class="sec">
+    <div style="margin-bottom:18px;">
+      <h2 style="font-weight:700;font-size:1.2rem;">My Profile</h2>
+      <p style="color:var(--silver);font-size:.83rem;margin-top:2px;">Manage your personal information</p>
     </div>
-    <div id="profile-loading" style="text-align:center;padding:60px;"><div class="spin spin-lg" style="margin:0 auto 12px;"></div><p style="color:var(--silver);">Loading your profile…</p></div>
-    <div id="profile-content" class="hidden"></div>
+    <div id="profile-wrap"><div style="display:flex;justify-content:center;padding:64px 0;"><div class="sp sp-lg"></div></div></div>
   </section>
 
+</div><!-- /main -->
 
+<!-- ══ MOBILE BOTTOM NAV ══ -->
+<nav id="mob-nav">
+  <button class="mob-btn on" id="mb-overview" onclick="go('overview')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Home
+  </button>
+  <button class="mob-btn" id="mb-loans" onclick="go('loans')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Loans
+  </button>
+  <button class="mob-btn" id="mb-apply" onclick="go('apply')" style="position:relative;">
+    <div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-l));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(212,168,83,.4);">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </div>
+    <span style="margin-top:14px;">Apply</span>
+  </button>
+  <button class="mob-btn" id="mb-payments" onclick="go('payments')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Pay
+  </button>
+  <button class="mob-btn" id="mb-profile" onclick="go('profile')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile
+  </button>
+</nav>
 
-
-</main>
-
-<!-- ══════════════ MODALS ══════════════ -->
-
-<!-- Payment Modal -->
-<div class="modal-bg" id="pay-modal">
-  <div class="modal">
+<!-- ══ LOAN DETAIL MODAL ══ -->
+<div id="loan-modal" class="modal" onclick="if(event.target===this)closeLoanM()">
+  <div class="modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.2rem;">Make a Payment</h3>
-      <button onclick="closeModal('pay-modal')" class="btn-outline" style="padding:6px;border-radius:8px;">✕</button>
+      <h3 class="logo-t" style="font-size:1.2rem;">Loan Details</h3>
+      <button onclick="closeLoanM()" style="background:none;border:none;cursor:pointer;color:var(--silver);"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
-    <div class="fg"><label class="lbl">Loan Application ID</label><input id="pm-loanid" type="number" class="inp" placeholder="e.g. 101"/></div>
-    <div class="fg"><label class="lbl">Amount (₹)</label><input id="pm-amount" type="number" class="inp" placeholder="e.g. 5000.00" step="0.01"/></div>
-    <div class="fg">
-      <label class="lbl">Payment Method</label>
-      <select id="pm-method" class="inp">
-        <option>UPI</option><option>Net Banking</option><option>Debit Card</option><option>Credit Card</option><option>NEFT</option>
-      </select>
-    </div>
-    <div class="fg"><label class="lbl">Transaction ID</label><input id="pm-txn" type="text" class="inp" placeholder="e.g. TXN987654321"/></div>
-    <div style="display:flex;gap:10px;margin-top:8px;">
-      <button onclick="submitPayment()" class="btn-gold" id="pm-btn">
-        <span id="pm-txt">Pay Now</span><div id="pm-spin" class="spin hidden"></div>
-      </button>
-      <button onclick="closeModal('pay-modal')" class="btn-outline">Cancel</button>
-    </div>
+    <div id="loan-detail"></div>
   </div>
 </div>
 
-<!-- Edit Profile Modal -->
-<div class="modal-bg" id="edit-modal">
-  <div class="modal">
+<!-- ══ PAYMENT MODAL ══ -->
+<div id="pay-modal" class="modal" onclick="if(event.target===this)closePayModal()">
+  <div class="modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.2rem;">Edit Profile</h3>
-      <button onclick="closeModal('edit-modal')" class="btn-outline" style="padding:6px;border-radius:8px;">✕</button>
+      <h3 class="logo-t" style="font-size:1.2rem;">Make a Payment</h3>
+      <button onclick="closePayModal()" style="background:none;border:none;cursor:pointer;color:var(--silver);"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
-    <div class="g2">
-      <div class="fg"><label class="lbl">Full Name</label><input id="ep-name"  type="text" class="inp" placeholder="Full Name"/></div>
-      <div class="fg"><label class="lbl">Email</label><input id="ep-email" type="email" class="inp" placeholder="Email"/></div>
-      <div class="fg"><label class="lbl">Phone</label><input id="ep-phone" type="tel" class="inp" maxlength="10" placeholder="Phone"/></div>
-      <div class="fg"><label class="lbl">City</label><input id="ep-city"  type="text" class="inp" placeholder="City"/></div>
-      <div class="fg"><label class="lbl">State</label><input id="ep-state" type="text" class="inp" placeholder="State"/></div>
-      <div class="fg"><label class="lbl">PIN Code</label><input id="ep-pin"  type="text" class="inp" maxlength="6" placeholder="Pincode"/></div>
-    </div>
-    <div class="fg"><label class="lbl">Address</label><input id="ep-addr"  type="text" class="inp" placeholder="House/Street/Area"/></div>
-    <div style="display:flex;gap:10px;margin-top:8px;">
-      <button onclick="updateProfile()" class="btn-gold" id="ep-btn">
-        <span id="ep-txt">Save Changes</span><div id="ep-spin" class="spin hidden"></div>
-      </button>
-      <button onclick="closeModal('edit-modal')" class="btn-outline">Cancel</button>
-    </div>
+    <form id="pay-form" onsubmit="submitPay(event)">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div><label class="lbl">Loan Application ID</label><input id="pm-lid" type="number" class="inp" placeholder="Your loan app ID" required/></div>
+        <div><label class="lbl">Amount (₹)</label><input id="pm-amt" type="number" step="0.01" class="inp" placeholder="e.g. 5000.00" required/></div>
+        <div>
+          <label class="lbl">Payment Method</label>
+          <select id="pm-method" class="inp" required>
+            <option value="">Select method…</option>
+            <option>UPI</option><option>Net Banking</option><option>Debit Card</option><option>Credit Card</option><option>NEFT</option><option>RTGS</option>
+          </select>
+        </div>
+        <div><label class="lbl">Transaction ID</label><input id="pm-txn" type="text" class="inp" placeholder="Bank/UPI transaction reference" required/></div>
+      </div>
+      <p id="pay-err" style="color:var(--red);font-size:.8rem;margin-top:8px;display:none;"></p>
+      <div style="display:flex;gap:10px;margin-top:18px;">
+        <button type="submit" id="pay-btn" class="btn btn-p" style="flex:1;justify-content:center;">
+          <span id="pay-txt">Confirm Payment</span>
+          <div id="pay-sp" class="sp sp-sm" style="display:none;"></div>
+        </button>
+        <button type="button" class="btn btn-o" onclick="closePayModal()">Cancel</button>
+      </div>
+    </form>
   </div>
 </div>
 
-<!-- Loan Detail Modal -->
-<div class="modal-bg" id="loan-modal">
-  <div class="modal" style="max-width:600px;">
+<!-- ══ PROFILE EDIT MODAL ══ -->
+<div id="prof-modal" class="modal" onclick="if(event.target===this)closeProfM()">
+  <div class="modal-box">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.2rem;">Loan Details</h3>
-      <button onclick="closeModal('loan-modal')" class="btn-outline" style="padding:6px;border-radius:8px;">✕</button>
+      <h3 class="logo-t" style="font-size:1.2rem;">Edit Profile</h3>
+      <button onclick="closeProfM()" style="background:none;border:none;cursor:pointer;color:var(--silver);"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
-    <div id="loan-modal-content"></div>
+    <form id="prof-form" onsubmit="submitProfile(event)">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div><label class="lbl">Full Name</label><input id="pe-name" type="text" class="inp" required/></div>
+        <div><label class="lbl">Email</label><input id="pe-email" type="email" class="inp" required/></div>
+        <div><label class="lbl">Phone</label><input id="pe-phone" type="tel" class="inp" maxlength="10" required/></div>
+        <div><label class="lbl">Aadhaar Number</label><input id="pe-aadhaar" type="text" class="inp" maxlength="12"/></div>
+        <div><label class="lbl">PAN Number</label><input id="pe-pan" type="text" class="inp" maxlength="10" style="text-transform:uppercase"/></div>
+        <div><label class="lbl">City</label><input id="pe-city" type="text" class="inp"/></div>
+        <div><label class="lbl">State</label><input id="pe-state" type="text" class="inp"/></div>
+        <div><label class="lbl">PIN Code</label><input id="pe-pin" type="text" class="inp" maxlength="6"/></div>
+        <div style="grid-column:1/-1;"><label class="lbl">Address</label><input id="pe-addr" type="text" class="inp"/></div>
+        <div style="grid-column:1/-1;"><label class="lbl">New Password <span style="color:#2e4a68;font-size:.7rem;">(leave blank to keep current)</span></label><input id="pe-pass" type="password" class="inp" placeholder="New password…"/></div>
+      </div>
+      <p id="prof-err" style="color:var(--red);font-size:.8rem;margin-top:8px;display:none;"></p>
+      <div style="display:flex;gap:10px;margin-top:18px;">
+        <button type="submit" id="pe-btn" class="btn btn-p" style="flex:1;justify-content:center;">
+          <span id="pe-txt">Save Changes</span>
+          <div id="pe-sp" class="sp sp-sm" style="display:none;"></div>
+        </button>
+        <button type="button" class="btn btn-o" onclick="closeProfM()">Cancel</button>
+      </div>
+    </form>
   </div>
 </div>
-
-
 <script>
-/* ══════════════════════════════════════
-   CONFIG & SESSION
-══════════════════════════════════════ */
-const BASE = 'https://loanapplication-712h.onrender.com';
+/* ═══════════════════════════════════════════
+   BASE URL & APIS — all scoped to userId
+═══════════════════════════════════════════ */
+const B = 'https://loanapplication-712h.onrender.com';
 const API = {
-  credit:    id   => `${BASE}/api/credit/${id}`,
-  emi:       id   => `${BASE}/api/emi/${id}`,
-  emiCalc:         `${BASE}/api/emi/calculate`,
-  loan:      id   => `${BASE}/api/loans/${id}`,
-  loans:           `${BASE}/api/loans`,
-  applyLoan:       `${BASE}/api/loans/apply`,
-  loanTypes:       `${BASE}/api/loan-types`,
-  payments:  id   => `${BASE}/api/payments/${id}`,
-  pay:             `${BASE}/api/payments/pay`,
-  user:      id   => `${BASE}/api/users/${id}`,
+  user:      uid => `${B}/api/users/${uid}`,
+  putUser:   uid => `${B}/api/users/${uid}`,
+  // ★ USER-SPECIFIC LOANS — not all loans
+  userLoans: uid => `${B}/api/loans/users/${uid}`,
+  loanTypes: `${B}/api/loan-types`,
+  applyLoan: `${B}/api/loans/apply`,
+  credit:    uid => `${B}/api/credit/${uid}`,
+  emiCalc:   `${B}/api/emi/calculate`,
+  emiFetch:  lid => `${B}/api/emi/${lid}`,
+  payFetch:  lid => `${B}/api/payments/${lid}`,
+  pay:       `${B}/api/payments/pay`,
 };
 
-// Session
-const session = {
-  token:  sessionStorage.getItem('loanify_token')  || '',
-  userId: sessionStorage.getItem('loanify_userId') || '1',
-  email:  sessionStorage.getItem('loanify_email')  || '',
-  name:   sessionStorage.getItem('loanify_name')   || 'User',
+/* ═══════════════════════════════════════════
+   SESSION
+═══════════════════════════════════════════ */
+const SS = {
+  get uid()   { return sessionStorage.getItem('loanify_userId'); },
+  get token() { return sessionStorage.getItem('loanify_token') || ''; },
+  get name()  { return sessionStorage.getItem('loanify_name') || 'User'; },
+  get email() { return sessionStorage.getItem('loanify_email') || ''; },
+  set name(v) { sessionStorage.setItem('loanify_name', v); },
+  set email(v){ sessionStorage.setItem('loanify_email', v); },
 };
 
-// Guard — if not logged in redirect
-if (!sessionStorage.getItem('loanify_userId')) {
-  // allow demo mode instead of hard redirect
-  session.userId = '1';
-  session.name = 'Demo User';
-}
+// Guard
+if (!SS.uid) { window.location.replace('user-auth.html'); }
 
-let currentSection = 'dashboard';
+let userProfile = null;
+let userLoans   = [];
+let currentSec  = 'overview';
 
-/* ══════════════════════════════════════
-   INIT
-══════════════════════════════════════ */
-window.addEventListener('DOMContentLoaded', async () => {
-  // Set user info in UI
-  const initials = session.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() || 'U';
-  document.getElementById('avatar').textContent = initials;
-  document.getElementById('topbar-avatar').textContent = initials;
-  document.getElementById('sb-name').textContent = session.name;
-  document.getElementById('hero-name').textContent = session.name.split(' ')[0];
+/* ═══════════════════════════════════════════
+   BOOT
+═══════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  // Today date
+  document.getElementById('today-date').textContent =
+    new Date().toLocaleDateString('en-IN', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
-  // Responsive hamburger
-  const ham = document.getElementById('hamburger');
-  if(window.innerWidth <= 768) ham.style.display='flex';
-  window.addEventListener('resize',()=>{ ham.style.display = window.innerWidth<=768?'flex':'none'; });
-
-  // Load dashboard data
-  await loadDashboard();
+  initUI();
+  bootLoad();
 });
 
-/* ══════════════════════════════════════
+async function bootLoad() {
+  setMeta(SS.name, SS.email);
+  ovl('Loading your dashboard…'); await sleep(300);
+
+  await Promise.all([loadProfile(), loadUserLoans()]);
+  hideOvl();
+}
+
+/* ═══════════════════════════════════════════
    NAVIGATION
-══════════════════════════════════════ */
-function nav(sec) {
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+═══════════════════════════════════════════ */
+const SEC_TITLES = {overview:'Dashboard',loans:'My Loans',apply:'Apply for Loan',emi:'EMI Calculator',payments:'Payments',credit:'Credit Score',profile:'My Profile'};
+const MOB_IDS    = ['overview','loans','apply','payments','profile'];
 
-  document.getElementById(`sec-${sec}`).classList.add('active');
-  document.querySelector(`.nav-item[onclick="nav('${sec}')"]`)?.classList.add('active');
+function go(id) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('on'));
+  document.querySelectorAll('.mob-btn').forEach(b => b.classList.remove('on'));
 
-  const titles = {dashboard:'Dashboard',loans:'My Loans',apply:'Apply for Loan',emi:'EMI Calculator',payments:'Payments',credit:'Credit Score',profile:'My Profile'};
-  const subs   = {dashboard:'Your financial overview',loans:'All your loan applications',apply:'Get funds in 8 minutes',emi:'Plan your repayments',payments:'Manage your payments',credit:'Your CIBIL credit report',profile:'Manage your account'};
-  document.getElementById('page-title').textContent = titles[sec] || sec;
-  document.getElementById('page-sub').textContent   = subs[sec]   || '';
+  document.getElementById(`sec-${id}`).classList.add('on');
+  const nl = document.getElementById(`nl-${id}`);
+  if (nl) nl.classList.add('on');
+  const mb = document.getElementById(`mb-${id}`);
+  if (mb) mb.classList.add('on');
 
-  currentSection = sec;
-  closeSidebar();
+  document.getElementById('tb-title').textContent = SEC_TITLES[id] || id;
+  currentSec = id;
+  closeSB();
 
-  // Lazy load sections
-  if(sec==='loans')    loadLoans();
-  if(sec==='credit')   loadCredit();
-  if(sec==='profile')  loadProfile();
-  if(sec==='apply')    loadLoanTypes();
-}
-
-function refreshSection(){ nav(currentSection); }
-
-/* Sidebar toggles */
-function openSidebar(){
-  document.getElementById('sidebar').classList.add('open');
-  document.getElementById('sidebar-overlay').classList.add('show');
-}
-function closeSidebar(){
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('show');
-}
-
-/* ══════════════════════════════════════
-   AJAX HELPERS
-══════════════════════════════════════ */
-function showLoader(msg='Loading…'){
-  document.getElementById('ajax-txt').textContent=msg;
-  document.getElementById('ajax-overlay').classList.add('show');
-}
-function hideLoader(){ document.getElementById('ajax-overlay').classList.remove('show'); }
-
-function setBtn(txtId,spinId,btnId,on,txt){
-  const b=document.getElementById(btnId);
-  if(b) b.disabled=on;
-  const t=document.getElementById(txtId); if(t) t.textContent=txt;
-  document.getElementById(spinId)?.classList.toggle('hidden',!on);
-}
-
-async function api(url, method='GET', body=null){
-  const opts = { method, headers:{'Content-Type':'application/json','Accept':'application/json'} };
-  if(session.token) opts.headers['Authorization'] = `Bearer ${session.token}`;
-  if(body) opts.body = JSON.stringify(body);
-  const res = await fetch(url, opts);
-  const data = await res.json().catch(()=>null);
-  return { ok: res.ok, status: res.status, data };
-}
-
-/* ══════════════════════════════════════
-   TOAST
-══════════════════════════════════════ */
-function toast(msg, type='inf'){
-  const icons={ok:'✅',err:'❌',inf:'ℹ️'};
-  const d=document.createElement('div');
-  d.className=`toast ${type}`;
-  d.innerHTML=`<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
-  document.getElementById('toasts').appendChild(d);
-  setTimeout(()=>d.remove(),4500);
-}
-
-/* ══════════════════════════════════════
-   DASHBOARD
-══════════════════════════════════════ */
-async function loadDashboard(){
-  // Load loans for stats
-  try{
-    const r = await api(API.loans);
-    if(r.ok && r.data){
-      const loans = Array.isArray(r.data) ? r.data : (r.data.content||r.data.loans||[]);
-      document.getElementById('dash-active-loans').textContent = loans.length;
-      const total = loans.reduce((s,l)=>s+(l.loanAmount||l.amount||0),0);
-      document.getElementById('dash-total').textContent = total ? '₹'+fmt(total) : '₹0';
-      // Update badge
-      document.getElementById('loan-count-badge').textContent = loans.length;
-      // Mini list
-      renderDashLoans(loans.slice(0,3));
-    }
-  }catch(e){}
-  // Credit
-  try{
-    const r = await api(API.credit(session.userId));
-    if(r.ok && r.data){
-      const score = r.data.creditScore||r.data.score||r.data.cibilScore||'–';
-      document.getElementById('dash-credit').textContent = score;
-    }
-  }catch(e){}
-}
-
-function renderDashLoans(loans){
-  const el = document.getElementById('dash-loans-list');
-  if(!loans.length){ el.innerHTML=`<p style="color:var(--silver);text-align:center;padding:20px;">No loans found. <button onclick="nav('apply')" style="color:var(--gold);background:none;border:none;cursor:pointer;font-weight:600;">Apply now →</button></p>`; return; }
-  el.innerHTML = loans.map(l=>`
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(30,48,88,.5);">
-      <div>
-        <p style="font-size:.85rem;font-weight:600;">${l.loanType||'Loan'}</p>
-        <p style="font-size:.75rem;color:var(--silver);">₹${fmt(l.loanAmount||0)}</p>
-      </div>
-      ${statusBadge(l.status)}
-    </div>`).join('');
-}
-
-/* ══════════════════════════════════════
-   LOANS
-══════════════════════════════════════ */
-async function loadLoans(){
-  show('loans-loading'); hide('loans-list');
-  try{
-    const r = await api(API.loans);
-    hide('loans-loading'); show('loans-list');
-    if(r.ok && r.data){
-      const loans = Array.isArray(r.data)?r.data:(r.data.content||r.data.loans||[]);
-      document.getElementById('loan-count-badge').textContent=loans.length;
-      if(!loans.length){
-        document.getElementById('loans-list').innerHTML=emptyState('No loans yet','You haven\'t applied for any loans.','apply','Apply Now');
-        return;
-      }
-      document.getElementById('loans-list').innerHTML=`<div style="display:flex;flex-direction:column;gap:14px;">`+
-        loans.map(l=>loanCard(l)).join('')+`</div>`;
-    } else {
-      document.getElementById('loans-list').innerHTML=emptyState('Could not load loans','API returned an error. Try refreshing.','','');
-    }
-  }catch(e){
-    hide('loans-loading'); show('loans-list');
-    document.getElementById('loans-list').innerHTML=errState('Network error: '+e.message);
+  switch(id) {
+    case 'loans':    renderLoans(userLoans, 'ALL'); break;
+    case 'apply':    loadLoanTypes(); bindApplyPreview(); break;
+    case 'credit':   loadCredit(); break;
+    case 'profile':  renderProfile(); break;
   }
 }
 
-function loanCard(l){
-  const prog = Math.min(100, Math.round(((l.paidEmi||0)/(l.tenureMonths||1))*100));
-  return `<div class="loan-card" onclick="viewLoan(${l.id||l.loanId||0})">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
-      <div>
-        <p style="font-size:.72rem;color:var(--silver);margin-bottom:4px;">#${l.id||l.loanId||'–'}</p>
-        <h4 style="font-weight:600;font-size:1rem;">${l.loanType||'Loan'}</h4>
-        <p style="color:var(--silver);font-size:.8rem;margin-top:2px;">${l.loanPurpose||l.purpose||''}</p>
-      </div>
-      <div style="text-align:right;">
-        ${statusBadge(l.status)}
-        <p style="font-size:1.1rem;font-weight:700;margin-top:6px;color:var(--gold);">₹${fmt(l.loanAmount||0)}</p>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0;font-size:.78rem;">
-      <div><p style="color:var(--silver);">Rate</p><p style="font-weight:600;">${l.interestRate||'–'}%</p></div>
-      <div><p style="color:var(--silver);">Tenure</p><p style="font-weight:600;">${l.tenureMonths||'–'} mo</p></div>
-      <div><p style="color:var(--silver);">Applied</p><p style="font-weight:600;">${l.appliedDate?new Date(l.appliedDate).toLocaleDateString('en-IN'):'–'}</p></div>
-    </div>
-    <div class="pbar"><div class="pbar-fill" style="width:${prog}%"></div></div>
-    <p style="color:var(--silver);font-size:.7rem;margin-top:4px;">${prog}% repaid</p>
-  </div>`;
-}
-
-async function viewLoan(id){
-  if(!id) return;
-  showLoader('Fetching loan details…');
-  try{
-    const r = await api(API.loan(id));
-    hideLoader();
-    if(r.ok && r.data){
-      const l = r.data;
-      document.getElementById('loan-modal-content').innerHTML=`
-        <div class="g2" style="margin-bottom:16px;">
-          <div><p class="lbl">Loan Type</p><p style="font-weight:600;margin-top:4px;">${l.loanType||'–'}</p></div>
-          <div><p class="lbl">Status</p><div style="margin-top:4px;">${statusBadge(l.status)}</div></div>
-          <div><p class="lbl">Amount</p><p style="font-weight:600;color:var(--gold);margin-top:4px;">₹${fmt(l.loanAmount||0)}</p></div>
-          <div><p class="lbl">Interest Rate</p><p style="font-weight:600;margin-top:4px;">${l.interestRate||'–'}% p.a.</p></div>
-          <div><p class="lbl">Tenure</p><p style="font-weight:600;margin-top:4px;">${l.tenureMonths||'–'} months</p></div>
-          <div><p class="lbl">Monthly Income</p><p style="font-weight:600;margin-top:4px;">₹${fmt(l.monthlyIncome||0)}</p></div>
-          <div><p class="lbl">Employment</p><p style="font-weight:600;margin-top:4px;">${l.employmentType||'–'}</p></div>
-          <div><p class="lbl">Applied Date</p><p style="font-weight:600;margin-top:4px;">${l.appliedDate?new Date(l.appliedDate).toLocaleString('en-IN'):'–'}</p></div>
-        </div>
-        <div style="padding:14px;border-radius:12px;background:rgba(212,168,83,.06);border:1px solid rgba(212,168,83,.15);">
-          <p class="lbl" style="margin-bottom:4px;">Loan Purpose</p>
-          <p style="font-size:.88rem;">${l.loanPurpose||l.purpose||'–'}</p>
-        </div>`;
-      openModal('loan-modal');
+/* ═══════════════════════════════════════════
+   SIDEBAR TOGGLE
+═══════════════════════════════════════════ */
+function initUI() {
+  const check = () => {
+    if (window.innerWidth >= 768) {
+      document.getElementById('sidebar').classList.remove('off');
+      document.getElementById('main').style.marginLeft = 'var(--sidebar)';
+      document.getElementById('sb-bg').style.display = 'none';
     } else {
-      toast('Failed to load loan details','err');
+      document.getElementById('sidebar').classList.add('off');
+      document.getElementById('main').style.marginLeft = '0';
     }
-  }catch(e){ hideLoader(); toast('Network error','err'); }
-}
-
-/* ══════════════════════════════════════
-   APPLY LOAN
-══════════════════════════════════════ */
-async function loadLoanTypes(){
-  try{
-    const r = await api(API.loanTypes);
-    if(r.ok && r.data){
-      const types = Array.isArray(r.data)?r.data:(r.data.loanTypes||[]);
-      if(types.length){
-        const icons = {home:'🏠',personal:'💰',business:'🏢',car:'🚗',education:'📚',gold:'🥇',loan:'💳'};
-        document.getElementById('loan-type-cards').innerHTML=types.map(t=>{
-          const nm = typeof t==='string'?t:(t.name||t.loanType||'Loan');
-          const key = nm.toLowerCase().split(' ')[0];
-          return `<div class="stat-card" style="cursor:pointer;" onclick="document.getElementById('a-type').value='${nm}'">
-            <div style="font-size:2rem;margin-bottom:8px;">${icons[key]||'💳'}</div>
-            <p style="font-weight:600;font-size:.9rem;">${nm}</p>
-            <p style="color:var(--silver);font-size:.75rem;margin-top:4px;">${t.description||'Tap to select'}</p>
-          </div>`;
-        }).join('');
-        return;
-      }
-    }
-  }catch(e){}
-  // Fallback static cards
-  const defaults=[{n:'Home Loan',i:'🏠',d:'From 8.5% p.a.'},{n:'Personal Loan',i:'💰',d:'Quick disbursement'},{n:'Business Loan',i:'🏢',d:'Grow your business'},{n:'Car Loan',i:'🚗',d:'Drive your dream car'},{n:'Education Loan',i:'📚',d:'Invest in your future'},{n:'Gold Loan',i:'🥇',d:'Instant against gold'}];
-  document.getElementById('loan-type-cards').innerHTML=defaults.map(d=>`
-    <div class="stat-card" style="cursor:pointer;" onclick="document.getElementById('a-type').value='${d.n}'">
-      <div style="font-size:2rem;margin-bottom:8px;">${d.i}</div>
-      <p style="font-weight:600;font-size:.9rem;">${d.n}</p>
-      <p style="color:var(--silver);font-size:.75rem;margin-top:4px;">${d.d}</p>
-    </div>`).join('');
-}
-
-async function submitLoanApp(e){
-  e.preventDefault();
-  const type=val('a-type'),amount=val('a-amount'),rate=val('a-rate'),tenure=val('a-tenure'),income=val('a-income'),emp=val('a-emp'),purpose=val('a-purpose');
-  if(!type||!amount||!rate||!tenure||!income||!emp||!purpose){ toast('Please fill all fields','err'); return; }
-
-  setBtn('apply-txt','apply-spin','apply-btn',true,'Submitting…');
-  showLoader('Submitting your application…');
-
-  const payload={
-    userId: parseInt(session.userId),
-    loanType: type, loanAmount: parseFloat(amount),
-    interestRate: parseFloat(rate), tenureMonths: parseInt(tenure),
-    monthlyIncome: parseFloat(income), employmentType: emp,
-    loanPurpose: purpose, status:'PENDING',
-    appliedDate: new Date().toISOString().slice(0,19)
   };
-
-  try{
-    const r = await api(API.applyLoan,'POST',payload);
-    hideLoader();
-    if(r.ok||r.status===201){
-      toast('✅ Loan application submitted!','ok');
-      document.getElementById('apply-form').reset();
-      setTimeout(()=>nav('loans'),1200);
-    } else {
-      toast((r.data?.message||'Application failed. Try again.'),'err');
-    }
-  }catch(err){ hideLoader(); toast('Network error','err'); }
-  finally{ setBtn('apply-txt','apply-spin','apply-btn',false,'Submit Application'); }
+  check(); window.addEventListener('resize', check);
 }
-
-/* ══════════════════════════════════════
-   EMI
-══════════════════════════════════════ */
-function liveEmi(){
-  const P=parseFloat(document.getElementById('e-principal').value)||0;
-  const R=(parseFloat(document.getElementById('e-rate').value)||0)/12/100;
-  const N=parseInt(document.getElementById('e-tenure').value)||0;
-  if(!P||!R||!N){ reset_emi_display(); return; }
-  const emi = (P*R*Math.pow(1+R,N))/(Math.pow(1+R,N)-1);
-  const total = emi*N, interest = total-P;
-  const ppct = Math.round((P/total)*100);
-  document.getElementById('live-emi').textContent=      '₹'+fmt(Math.round(emi));
-  document.getElementById('live-interest').textContent= '₹'+fmt(Math.round(interest));
-  document.getElementById('live-total').textContent=    '₹'+fmt(Math.round(total));
-  document.getElementById('live-tenure').textContent=   N+' mo';
-  document.getElementById('pbar-principal').style.width=ppct+'%';
+function toggleSB() {
+  const sb = document.getElementById('sidebar');
+  const bg = document.getElementById('sb-bg');
+  if (sb.classList.contains('off')) {
+    sb.classList.remove('off'); bg.style.display='block';
+  } else closeSB();
 }
-
-function reset_emi_display(){
-  ['live-emi','live-interest','live-total','live-tenure'].forEach(id=>document.getElementById(id).textContent='₹ –');
-  document.getElementById('pbar-principal').style.width='0%';
-}
-
-async function calcEmi(){
-  const loanAppId=parseInt(document.getElementById('e-appid').value)||101;
-  const principalAmount=parseFloat(document.getElementById('e-principal').value);
-  const interestRate=parseFloat(document.getElementById('e-rate').value);
-  const tenureMonths=parseInt(document.getElementById('e-tenure').value);
-  if(!principalAmount||!interestRate||!tenureMonths){ toast('Fill all EMI fields','err'); return; }
-
-  setBtn('emi-txt','emi-spin','emi-btn',true,'Calculating…');
-  showLoader('Calculating EMI…');
-
-  try{
-    const r = await api(API.emiCalc,'POST',{loanAppId,principalAmount,interestRate,tenureMonths,calculationDate:new Date().toISOString().slice(0,19)});
-    hideLoader();
-    if(r.ok&&r.data){
-      const d=r.data;
-      document.getElementById('emi-api-content').innerHTML=`
-        <div class="g2" style="gap:12px;">
-          <div><p style="color:var(--silver);font-size:.72rem;">Monthly EMI</p><p style="font-weight:700;font-size:1.2rem;color:var(--gold);">₹${fmt(d.monthlyEmi||d.emi||d.emiAmount||0)}</p></div>
-          <div><p style="color:var(--silver);font-size:.72rem;">Total Amount</p><p style="font-weight:700;font-size:1.2rem;">₹${fmt(d.totalAmount||d.totalRepayment||0)}</p></div>
-          <div><p style="color:var(--silver);font-size:.72rem;">Total Interest</p><p style="font-weight:700;font-size:1.2rem;">₹${fmt(d.totalInterest||0)}</p></div>
-          <div><p style="color:var(--silver);font-size:.72rem;">Processing Fee</p><p style="font-weight:700;font-size:1.2rem;">₹${fmt(d.processingFee||0)}</p></div>
-        </div>`;
-      show('emi-api-result');
-      toast('EMI calculated successfully','ok');
-    } else {
-      toast(r.data?.message||'Calculation failed','err');
-    }
-  }catch(err){ hideLoader(); toast('Network error','err'); }
-  finally{ setBtn('emi-txt','emi-spin','emi-btn',false,'Calculate via API'); }
-}
-
-async function fetchEmiById(){
-  const id=document.getElementById('e-appid').value;
-  if(!id){ toast('Enter a Loan Application ID','err'); return; }
-  showLoader('Fetching EMI…');
-  try{
-    const r=await api(API.emi(id));
-    hideLoader();
-    if(r.ok&&r.data){
-      const d=r.data;
-      document.getElementById('emi-api-content').innerHTML=`
-        <div class="g2" style="gap:12px;">
-          <div><p style="color:var(--silver);font-size:.72rem;">EMI ID</p><p style="font-weight:600;">${d.id||'–'}</p></div>
-          <div><p style="color:var(--silver);font-size:.72rem;">Monthly EMI</p><p style="font-weight:700;color:var(--gold);">₹${fmt(d.monthlyEmi||d.emiAmount||0)}</p></div>
-          <div><p style="color:var(--silver);font-size:.72rem;">Principal</p><p style="font-weight:600;">₹${fmt(d.principalAmount||0)}</p></div>
-          <div><p style="color:var(--silver);font-size:.72rem;">Interest Rate</p><p style="font-weight:600;">${d.interestRate||0}%</p></div>
-        </div>`;
-      show('emi-api-result');
-      toast('EMI fetched successfully','ok');
-    } else {
-      toast('No EMI record found for this ID','err');
-    }
-  }catch(e){ hideLoader(); toast('Network error','err'); }
-}
-
-/* ══════════════════════════════════════
-   PAYMENTS
-══════════════════════════════════════ */
-async function fetchPayments(){
-  const id=val('pay-fetch-id');
-  if(!id){ toast('Enter a Loan Application ID','err'); return; }
-  setBtn('','pay-fetch-spin','',true,'Fetching…');
-  document.getElementById('pay-fetch-btn').disabled=true;
-  showLoader('Fetching payments…');
-  try{
-    const r=await api(API.payments(id));
-    hideLoader();
-    document.getElementById('pay-fetch-btn').disabled=false;
-    document.getElementById('pay-fetch-spin').classList.add('hidden');
-    if(r.ok&&r.data){
-      const payments=Array.isArray(r.data)?r.data:(r.data.payments||[]);
-      if(!payments.length){ document.getElementById('payments-result').innerHTML=emptyState('No payments found','No payments recorded for this loan ID.','',''); return; }
-      document.getElementById('payments-result').innerHTML=`
-        <div class="tbl-wrap"><table class="tbl">
-          <thead><tr><th>ID</th><th>Amount</th><th>Method</th><th>Transaction ID</th><th>Status</th><th>Date</th></tr></thead>
-          <tbody>`+payments.map(p=>`<tr>
-            <td>${p.id||'–'}</td>
-            <td style="color:var(--gold);font-weight:600;">₹${fmt(p.amount||0)}</td>
-            <td>${p.paymentMethod||'–'}</td>
-            <td style="font-size:.75rem;color:var(--silver);">${p.transactionId||'–'}</td>
-            <td>${statusBadge(p.paymentStatus||p.status)}</td>
-            <td style="font-size:.78rem;">${p.paymentDate?new Date(p.paymentDate).toLocaleDateString('en-IN'):'–'}</td>
-          </tr>`).join('')+`</tbody></table></div>`;
-      toast('Payments loaded','ok');
-    } else {
-      document.getElementById('payments-result').innerHTML=errState(r.data?.message||'No payment records found.');
-    }
-  }catch(e){ hideLoader(); document.getElementById('pay-fetch-btn').disabled=false; toast('Network error','err'); }
-}
-
-function openPayModal(){ openModal('pay-modal'); }
-
-async function submitPayment(){
-  const loanApplicationId=parseInt(val('pm-loanid'));
-  const amount=parseFloat(val('pm-amount'));
-  const paymentMethod=val('pm-method');
-  const transactionId=val('pm-txn');
-  if(!loanApplicationId||!amount||!paymentMethod){ toast('Fill all payment fields','err'); return; }
-
-  setBtn('pm-txt','pm-spin','pm-btn',true,'Processing…');
-  showLoader('Processing payment…');
-  try{
-    const r=await api(API.pay,'POST',{loanApplicationId,amount,paymentMethod,transactionId:transactionId||('TXN'+Date.now()),paymentStatus:'SUCCESS',paymentDate:new Date().toISOString().slice(0,19)});
-    hideLoader();
-    if(r.ok||r.status===201){
-      toast('✅ Payment successful!','ok');
-      closeModal('pay-modal');
-      document.getElementById('pm-loanid').value='';
-      document.getElementById('pm-amount').value='';
-      document.getElementById('pm-txn').value='';
-    } else {
-      toast(r.data?.message||'Payment failed','err');
-    }
-  }catch(e){ hideLoader(); toast('Network error','err'); }
-  finally{ setBtn('pm-txt','pm-spin','pm-btn',false,'Pay Now'); }
-}
-
-/* ══════════════════════════════════════
-   CREDIT SCORE
-══════════════════════════════════════ */
-async function loadCredit(){
-  show('credit-loading'); hide('credit-content');
-  try{
-    const r=await api(API.credit(session.userId));
-    hide('credit-loading');
-    if(r.ok&&r.data){
-      const d=r.data;
-      const score=d.creditScore||d.score||d.cibilScore||700;
-      document.getElementById('credit-score-val').textContent=score;
-      // Animate ring: 427 = 2πr
-      const pct=(score-300)/600;
-      setTimeout(()=>{ document.getElementById('score-ring').style.strokeDashoffset=427-(427*pct); },100);
-      // Color
-      const color = score>=750?'#22c55e':score>=650?'#eab308':score>=550?'#f97316':'#ef4444';
-      document.getElementById('score-ring').style.stroke=color;
-      document.getElementById('credit-score-val').style.color=color;
-      // Grade
-      const grade=score>=750?'Excellent':score>=650?'Good':score>=550?'Fair':'Poor';
-      document.getElementById('credit-grade-badge').innerHTML=`<span class="badge ${score>=750?'badge-green':score>=650?'badge-gold':score>=550?'badge-blue':'badge-red'}">${grade}</span>`;
-      document.getElementById('credit-desc').textContent=score>=750?'Excellent score! You qualify for best rates and offers.':score>=650?'Good score. Most lenders will approve your application.':score>=550?'Fair score. Consider improving before applying.':'Poor score. Work on improving credit before applying.';
-      // Details
-      const rows=[
-        ['Credit Utilization', d.creditUtilization||'–','%'],
-        ['Payment History',d.paymentHistory||'On Time',''],
-        ['Credit Age',d.creditAge||d.avgAccountAge||'–',' yrs'],
-        ['Total Accounts',d.totalAccounts||'–',''],
-        ['Enquiries (6mo)',d.recentEnquiries||0,''],
-      ];
-      document.getElementById('credit-details').innerHTML=rows.map(([k,v,u])=>`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(30,48,88,.4);">
-          <span style="color:var(--silver);font-size:.83rem;">${k}</span>
-          <span style="font-weight:600;font-size:.83rem;">${v}${u}</span>
-        </div>`).join('');
-      show('credit-content');
-    } else {
-      // Demo fallback
-      renderDemoCredit(720);
-    }
-  }catch(e){ hide('credit-loading'); renderDemoCredit(720); }
-}
-
-function renderDemoCredit(score){
-  document.getElementById('credit-score-val').textContent=score;
-  setTimeout(()=>{const p=(score-300)/600; document.getElementById('score-ring').style.strokeDashoffset=427-(427*p);},100);
-  document.getElementById('score-ring').style.stroke='#22c55e';
-  document.getElementById('credit-score-val').style.color='#22c55e';
-  document.getElementById('credit-grade-badge').innerHTML=`<span class="badge badge-green">Good</span>`;
-  document.getElementById('credit-desc').textContent='Demo data – Good score. Most lenders will approve your application.';
-  document.getElementById('credit-details').innerHTML=`<div style="color:var(--silver);font-size:.82rem;padding:10px 0;">Demo mode: connect your account to see real credit data.</div>`;
-  show('credit-content');
-}
-
-/* ══════════════════════════════════════
-   PROFILE
-══════════════════════════════════════ */
-let profileData = {};
-
-async function loadProfile(){
-  show('profile-loading'); hide('profile-content');
-  try{
-    const r=await api(API.user(session.userId));
-    hide('profile-loading');
-    if(r.ok&&r.data){
-      profileData=r.data;
-      renderProfile(r.data);
-      show('profile-content');
-    } else {
-      renderProfile({fullName:session.name,email:session.email,phone:'–',city:'–',state:'–',address:'–',pincode:'–',aadhaarNumber:'XXXX-XXXX-XXXX',panNumber:'XXXXX0000X',role:'ROLE_USER'});
-      show('profile-content');
-    }
-  }catch(e){
-    hide('profile-loading');
-    renderProfile({fullName:session.name,email:session.email});
-    show('profile-content');
+function closeSB() {
+  if (window.innerWidth < 768) {
+    document.getElementById('sidebar').classList.add('off');
+    document.getElementById('sb-bg').style.display = 'none';
   }
 }
 
-function renderProfile(d){
-  const initials=(d.fullName||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-  document.getElementById('profile-content').innerHTML=`
-    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
-      <!-- Avatar card -->
-      <div class="card" style="flex:0 0 auto;min-width:200px;text-align:center;">
-        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:var(--navy);margin:0 auto 12px;">${initials}</div>
-        <h3 style="font-weight:700;font-size:1.1rem;">${d.fullName||'–'}</h3>
-        <p style="color:var(--silver);font-size:.8rem;margin-top:4px;">${d.email||'–'}</p>
-        <div style="margin-top:12px;">${statusBadge(d.role==='ROLE_USER'?'ACTIVE':d.role||'USER')}</div>
+/* ═══════════════════════════════════════════
+   REFRESH
+═══════════════════════════════════════════ */
+async function doRefresh() {
+  toast('Refreshing…','info');
+  switch(currentSec) {
+    case 'overview':  await Promise.all([loadProfile(), loadUserLoans()]); break;
+    case 'loans':     await loadUserLoans(); renderLoans(userLoans,'ALL'); break;
+    case 'apply':     loadLoanTypes(); break;
+    case 'credit':    loadCredit(); break;
+    case 'profile':   await loadProfile(); renderProfile(); break;
+  }
+  toast('Refreshed!','ok');
+}
+
+/* ═══════════════════════════════════════════
+   FETCH HELPER
+═══════════════════════════════════════════ */
+async function apiFetch(url, opts={}) {
+  const h = {'Content-Type':'application/json','Accept':'application/json'};
+  if (SS.token) h['Authorization'] = `Bearer ${SS.token}`;
+  return fetch(url, {...opts, headers:{...h,...(opts.headers||{})}});
+}
+
+/* ═══════════════════════════════════════════
+   PROFILE
+═══════════════════════════════════════════ */
+async function loadProfile() {
+  try {
+    const r = await apiFetch(API.user(SS.uid));
+    if (r.ok) {
+      userProfile = await r.json();
+      const name  = userProfile.fullName || userProfile.name || SS.name;
+      const email = userProfile.email || SS.email;
+      SS.name = name; SS.email = email;
+      setMeta(name, email);
+    }
+  } catch(e) { console.warn('Profile load failed', e); }
+}
+
+function setMeta(name, email) {
+  const av = (name||'?').charAt(0).toUpperCase();
+  ['sb-av','tb-av'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = av; });
+  const sn = document.getElementById('sb-name'); if(sn) sn.textContent = name;
+  const se = document.getElementById('sb-email'); if(se) se.textContent = email;
+  const hn = document.getElementById('hero-name'); if(hn) hn.textContent = name.split(' ')[0] || name;
+}
+
+function renderProfile() {
+  const u = userProfile;
+  const wrap = document.getElementById('profile-wrap');
+  if (!u) {
+    wrap.innerHTML = `<div class="empty card"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><p>Could not load profile.</p><button class="btn btn-o btn-sm" onclick="loadProfile().then(renderProfile)">Retry</button></div>`;
+    return;
+  }
+  const av = (u.fullName||'U').charAt(0).toUpperCase();
+
+  wrap.innerHTML = `
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <!-- Left -->
+      <div class="card" style="text-align:center;">
+        <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-l));display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:700;color:var(--navy);margin:0 auto 14px;">${av}</div>
+        <h3 style="font-weight:700;font-size:1.05rem;">${u.fullName||'—'}</h3>
+        <p style="color:var(--silver);font-size:.82rem;margin-top:3px;">${u.email||'—'}</p>
+        <span class="badge b-green" style="display:inline-flex;margin-top:10px;">${u.role||'ROLE_USER'}</span>
+        <div style="border-top:1px solid var(--border);margin-top:18px;padding-top:14px;">
+          <button class="btn btn-p" style="width:100%;justify-content:center;" onclick="openProfM()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit Profile
+          </button>
+        </div>
+        <div style="margin-top:12px;">
+          <button class="btn btn-o" style="width:100%;justify-content:center;color:var(--red);border-color:rgba(248,113,113,.25);" onclick="doLogout()">Sign Out</button>
+        </div>
       </div>
       <!-- Details -->
-      <div style="flex:1;min-width:280px;display:flex;flex-direction:column;gap:16px;">
-        <div class="card">
-          <h4 style="font-weight:600;margin-bottom:14px;color:var(--gold);">Personal Information</h4>
-          <div class="g2" style="gap:12px;">
-            ${prow('Full Name',d.fullName)}${prow('Phone',d.phone)}
-            ${prow('City',d.city)}${prow('State',d.state)}
-            ${prow('PIN Code',d.pincode)}${prow('Address',d.address)}
-          </div>
+      <div class="card lg:col-span-2">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <h3 style="font-weight:700;">Personal Information</h3>
+          <span style="color:var(--silver);font-size:.72rem;">User ID: <strong style="color:var(--gold);">#${SS.uid}</strong></span>
         </div>
-        <div class="card">
-          <h4 style="font-weight:600;margin-bottom:14px;color:var(--gold);">KYC Details</h4>
-          <div class="g2" style="gap:12px;">
-            ${prow('Aadhaar',d.aadhaarNumber?'XXXX-XXXX-'+d.aadhaarNumber.slice(-4):'–')}
-            ${prow('PAN',d.panNumber||'–')}
-          </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          ${pRow('Full Name',u.fullName)}
+          ${pRow('Email Address',u.email)}
+          ${pRow('Phone',u.phone)}
+          ${pRow('Aadhaar',u.aadhaarNumber?u.aadhaarNumber.replace(/(\d{4})(\d{4})(\d{4})/,'$1 $2 $3'):'—')}
+          ${pRow('PAN Number',u.panNumber)}
+          ${pRow('City',u.city)}
+          ${pRow('State',u.state)}
+          ${pRow('PIN Code',u.pincode)}
         </div>
+        ${u.address?`<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);"><p class="lbl" style="margin-bottom:4px;">Address</p><p style="color:#c8d8ee;">${u.address}</p></div>`:''}
       </div>
     </div>`;
 }
 
-function prow(label,val){return `<div><p class="lbl" style="margin-bottom:4px;">${label}</p><p style="font-size:.88rem;font-weight:500;">${val||'–'}</p></div>`;}
-
-function openEditModal(){
-  const d=profileData;
-  document.getElementById('ep-name').value=d.fullName||session.name||'';
-  document.getElementById('ep-email').value=d.email||session.email||'';
-  document.getElementById('ep-phone').value=d.phone||'';
-  document.getElementById('ep-city').value=d.city||'';
-  document.getElementById('ep-state').value=d.state||'';
-  document.getElementById('ep-pin').value=d.pincode||'';
-  document.getElementById('ep-addr').value=d.address||'';
-  openModal('edit-modal');
+function pRow(l, v) {
+  return `<div><p class="lbl" style="margin-bottom:3px;">${l}</p><p style="color:#c8d8ee;font-weight:500;">${v||'—'}</p></div>`;
 }
 
-async function updateProfile(){
-  const payload={
-    fullName:val('ep-name'),email:val('ep-email'),phone:val('ep-phone'),
-    city:val('ep-city'),state:val('ep-state'),pincode:val('ep-pin'),address:val('ep-addr'),
-    aadhaarNumber:profileData.aadhaarNumber||'',panNumber:profileData.panNumber||'',
-    password:profileData.password||'',role:profileData.role||'ROLE_USER',
-  };
-  if(!payload.fullName||!payload.email){ toast('Name and email are required','err'); return; }
-  setBtn('ep-txt','ep-spin','ep-btn',true,'Saving…');
-  showLoader('Updating profile…');
-  try{
-    const r=await api(API.user(session.userId),'PUT',payload);
-    hideLoader();
-    if(r.ok){
-      toast('✅ Profile updated!','ok');
-      sessionStorage.setItem('loanify_name',payload.fullName);
-      session.name=payload.fullName;
-      document.getElementById('sb-name').textContent=payload.fullName;
-      const ini=payload.fullName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-      document.getElementById('avatar').textContent=ini;
-      document.getElementById('topbar-avatar').textContent=ini;
-      document.getElementById('hero-name').textContent=payload.fullName.split(' ')[0];
-      profileData={...profileData,...payload};
-      closeModal('edit-modal');
-      renderProfile(profileData); show('profile-content');
+/* ═══════════════════════════════════════════
+   USER LOANS (user-specific endpoint)
+═══════════════════════════════════════════ */
+async function loadUserLoans() {
+  try {
+    // ★ ONLY fetch this user's loans
+    const r = await apiFetch(API.userLoans(SS.uid));
+    if (r.ok) {
+      let d = await r.json();
+      userLoans = Array.isArray(d) ? d : (d.loans || d.content || []);
     } else {
-      toast(r.data?.message||'Update failed','err');
+      userLoans = [];
     }
-  }catch(e){ hideLoader(); toast('Network error','err'); }
-  finally{ setBtn('ep-txt','ep-spin','ep-btn',false,'Save Changes'); }
+  } catch(e) { userLoans = []; }
+
+  // Badge
+  const nb = document.getElementById('loan-nb');
+  if (userLoans.length) { nb.textContent = userLoans.length; nb.classList.remove('hidden'); }
+  else nb.classList.add('hidden');
+
+  renderOverview();
 }
 
-/* ══════════════════════════════════════
-   LOGOUT
-══════════════════════════════════════ */
-function logout(){
-  sessionStorage.clear();
-  toast('Signed out successfully','ok');
-  setTimeout(()=>{ window.location.href='user-auth.html'; },800);
+/* ═══════════════════════════════════════════
+   OVERVIEW RENDER
+═══════════════════════════════════════════ */
+function renderOverview() {
+  const loans = userLoans;
+  const approved = loans.filter(l => l.status==='APPROVED').length;
+  const pending  = loans.filter(l => l.status==='PENDING').length;
+  const active   = loans.filter(l => l.status==='ACTIVE').length;
+  const totalAmt = loans.reduce((s,l) => s+(l.loanAmount||0), 0);
+
+  document.getElementById('stat-row').innerHTML = `
+    ${stat('Total Applications', loans.length, 'var(--gold)')}
+    ${stat('Approved / Active', approved+active, 'var(--green)')}
+    ${stat('Under Review', pending, 'var(--amber)')}
+    ${stat('Total Loan Value', '₹'+fmt(totalAmt), 'var(--silver)')}`;
+
+  // Recent — last 3
+  const recent = [...loans].reverse().slice(0,3);
+  const rEl = document.getElementById('ov-recent');
+  if (!recent.length) {
+    rEl.innerHTML = `<div class="empty"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><p>No loan applications yet.</p><button class="btn btn-p btn-sm" onclick="go('apply')">Apply Now</button></div>`;
+    return;
+  }
+  rEl.innerHTML = recent.map(l => `
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);" onclick="viewLoan(${lId(l)})" style="cursor:pointer;">
+      <div>
+        <p style="font-weight:600;font-size:.88rem;">${l.loanType||'Loan'} <span style="color:#2e4a68;">#${lId(l)}</span></p>
+        <p style="color:var(--silver);font-size:.78rem;margin-top:2px;">₹${fmt(l.loanAmount)} · ${l.tenureMonths||'—'} months · ${l.interestRate||'—'}% p.a.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${pill(l.status)}
+        <button class="btn btn-o btn-xs" onclick="event.stopPropagation();viewLoan(${lId(l)})">Details</button>
+      </div>
+    </div>`).join('');
 }
 
-/* ══════════════════════════════════════
-   MODAL HELPERS
-══════════════════════════════════════ */
-function openModal(id){ document.getElementById(id).classList.add('show'); }
-function closeModal(id){ document.getElementById(id).classList.remove('show'); }
-// Close on backdrop click
-document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m) m.classList.remove('show');}));
-
-/* ══════════════════════════════════════
-   UI HELPERS
-══════════════════════════════════════ */
-function show(id){ document.getElementById(id)?.classList.remove('hidden'); }
-function hide(id){ document.getElementById(id)?.classList.add('hidden'); }
-function val(id){ return (document.getElementById(id)?.value||'').trim(); }
-function fmt(n){ return Number(n).toLocaleString('en-IN'); }
-
-function statusBadge(s){
-  if(!s) return '';
-  const map={PENDING:'badge-gold',APPROVED:'badge-green',REJECTED:'badge-red',ACTIVE:'badge-green',CLOSED:'badge-blue',SUCCESS:'badge-green',FAILED:'badge-red',ROLE_USER:'badge-blue'};
-  const cls=map[s?.toUpperCase()]||'badge-blue';
-  return `<span class="badge ${cls}">${s}</span>`;
-}
-
-function emptyState(title,desc,navTo,btnTxt){
-  return `<div class="card" style="text-align:center;padding:48px 24px;">
-    <div style="font-size:3rem;margin-bottom:12px;">📭</div>
-    <h3 style="font-weight:600;margin-bottom:8px;">${title}</h3>
-    <p style="color:var(--silver);font-size:.85rem;margin-bottom:20px;">${desc}</p>
-    ${navTo?`<button onclick="nav('${navTo}')" class="btn-gold">${btnTxt}</button>`:''}
+function stat(label, val, color) {
+  return `<div class="stat">
+    <p style="color:var(--silver);font-size:.71rem;font-weight:700;letter-spacing:.055em;text-transform:uppercase;margin-bottom:8px;">${label}</p>
+    <p class="logo-t" style="font-size:1.55rem;color:${color};">${val}</p>
   </div>`;
 }
 
-function errState(msg){
-  return `<div class="card" style="text-align:center;padding:40px;"><div style="font-size:2.5rem;margin-bottom:10px;">⚠️</div><p style="color:var(--danger);font-size:.88rem;">${msg}</p></div>`;
+/* ═══════════════════════════════════════════
+   LOANS PAGE
+═══════════════════════════════════════════ */
+let currentFilter = 'ALL';
+
+function filterLoans(status, btn) {
+  document.querySelectorAll('.ltp').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  currentFilter = status;
+  renderLoans(userLoans, status);
 }
+
+function renderLoans(loans, filter) {
+  const filtered = filter === 'ALL' ? loans : loans.filter(l => l.status === filter);
+  const wrap = document.getElementById('loans-wrap');
+  if (!filtered.length) {
+    wrap.innerHTML = `<div class="empty" style="border:1px solid var(--border);border-radius:13px;"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><p>${filter==='ALL'?'No loan applications yet.':'No '+filter.toLowerCase()+' loans.'}</p><button class="btn btn-p btn-sm" onclick="go('apply')">Apply for a Loan</button></div>`;
+    return;
+  }
+
+  // Desktop table
+  wrap.innerHTML = `
+    <!-- Desktop table -->
+    <div class="tbl-wrap hidden md:block">
+      <table>
+        <thead><tr>
+          <th>Loan ID</th><th>Type</th><th>Amount</th><th>Rate</th><th>Tenure</th><th>Status</th><th>Applied On</th><th>Action</th>
+        </tr></thead>
+        <tbody>${filtered.map(l => `
+          <tr style="cursor:pointer;" onclick="viewLoan(${lId(l)})">
+            <td style="color:var(--gold);font-weight:600;">#${lId(l)}</td>
+            <td>${l.loanType||'—'}</td>
+            <td style="font-weight:600;">₹${fmt(l.loanAmount)}</td>
+            <td>${l.interestRate||'—'}%</td>
+            <td>${l.tenureMonths||'—'} mo</td>
+            <td>${pill(l.status)}</td>
+            <td>${l.appliedDate ? new Date(l.appliedDate).toLocaleDateString('en-IN') : '—'}</td>
+            <td><button class="btn btn-o btn-xs" onclick="event.stopPropagation();viewLoan(${lId(l)})">View</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <!-- Mobile cards -->
+    <div class="md:hidden" style="display:flex;flex-direction:column;gap:10px;">
+      ${filtered.map(l => `
+        <div class="loan-card" onclick="viewLoan(${lId(l)})">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">
+            <div>
+              <p style="font-weight:700;font-size:.9rem;">${l.loanType||'Loan'}</p>
+              <p style="color:var(--silver);font-size:.73rem;margin-top:1px;">#${lId(l)}</p>
+            </div>
+            ${pill(l.status)}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.8rem;">
+            <div><p style="color:var(--silver);font-size:.68rem;">AMOUNT</p><p style="font-weight:600;">₹${fmt(l.loanAmount)}</p></div>
+            <div><p style="color:var(--silver);font-size:.68rem;">TENURE</p><p style="font-weight:600;">${l.tenureMonths||'—'} months</p></div>
+            <div><p style="color:var(--silver);font-size:.68rem;">RATE</p><p style="font-weight:600;">${l.interestRate||'—'}% p.a.</p></div>
+            <div><p style="color:var(--silver);font-size:.68rem;">APPLIED</p><p style="font-weight:600;">${l.appliedDate?new Date(l.appliedDate).toLocaleDateString('en-IN'):'—'}</p></div>
+          </div>
+          <div style="margin-top:10px;text-align:right;">
+            <button class="btn btn-o btn-xs" onclick="event.stopPropagation();viewLoan(${lId(l)})">View Details →</button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════
+   LOAN DETAIL MODAL
+═══════════════════════════════════════════ */
+async function viewLoan(id) {
+  document.getElementById('loan-detail').innerHTML = '<div style="display:flex;justify-content:center;padding:32px 0;"><div class="sp sp-md"></div></div>';
+  document.getElementById('loan-modal').classList.add('open');
+
+  // Find in cached userLoans first
+  let l = userLoans.find(x => lId(x) == id);
+  if (!l) {
+    try {
+      // Fallback: try fetching directly (still user's loan since we got ID from user's list)
+      const r = await apiFetch(`${B}/api/loans/${id}`);
+      if (r.ok) l = await r.json();
+    } catch(e) {}
+  }
+
+  if (!l) {
+    document.getElementById('loan-detail').innerHTML = '<p style="color:var(--red);">Could not load loan details.</p>';
+    return;
+  }
+
+  document.getElementById('loan-detail').innerHTML = `
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      ${dRow('Loan ID','#'+lId(l))}
+      ${dRow('Type',l.loanType)}
+      ${dRow('Amount','₹'+fmt(l.loanAmount))}
+      ${dRow('Interest Rate',(l.interestRate||'—')+'% p.a.')}
+      ${dRow('Tenure',(l.tenureMonths||'—')+' months')}
+      ${dRow('Status',pill(l.status))}
+      ${dRow('Employment',l.employmentType)}
+      ${dRow('Monthly Income','₹'+fmt(l.monthlyIncome))}
+    </div>
+    ${l.loanPurpose?`<div style="background:var(--navy-4);border-radius:10px;padding:12px;margin-bottom:14px;"><p class="lbl" style="margin-bottom:3px;">Purpose</p><p style="font-size:.85rem;">${l.loanPurpose}</p></div>`:''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+      <button class="btn btn-p btn-sm" onclick="closeLoanM();go('payments');setTimeout(()=>{openPayModal();document.getElementById('pm-lid').value=${lId(l)};},100)">Make Payment</button>
+      <button class="btn btn-o btn-sm" onclick="closeLoanM();go('emi');setTimeout(()=>{document.getElementById('e-fid').value=${lId(l)};fetchEMI();},100)">View EMI</button>
+      <button class="btn btn-o btn-sm" onclick="closeLoanM()">Close</button>
+    </div>`;
+}
+function closeLoanM() { document.getElementById('loan-modal').classList.remove('open'); }
+
+function dRow(l, v) {
+  return `<div><p class="lbl" style="margin-bottom:2px;">${l}</p><p style="font-weight:500;font-size:.85rem;">${v||'—'}</p></div>`;
+}
+
+/* ═══════════════════════════════════════════
+   LOAN TYPES
+═══════════════════════════════════════════ */
+async function loadLoanTypes() {
+  try {
+    const r = await apiFetch(API.loanTypes);
+    if (r.ok) {
+      let d = await r.json();
+      if (!Array.isArray(d)) d = [];
+      if (d.length) {
+        const names = d.map(t => t.name||t);
+        document.getElementById('type-pills').innerHTML = names.map(n =>
+          `<button class="ltp" onclick="pickType('${n}',this)">${n}</button>`).join('');
+        const sel = document.getElementById('ap-type');
+        sel.innerHTML = '<option value="">Select type…</option>' + names.map(n => `<option>${n}</option>`).join('');
+        return;
+      }
+    }
+  } catch(e) {}
+  // Defaults
+  const defaults = ['Home Loan','Personal Loan','Business Loan','Education Loan','Car Loan','Gold Loan'];
+  document.getElementById('type-pills').innerHTML = defaults.map(n =>
+    `<button class="ltp" onclick="pickType('${n}',this)">${n}</button>`).join('');
+}
+
+function pickType(name, btn) {
+  document.querySelectorAll('.ltp').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('ap-type').value = name;
+  calcApplyPreview();
+}
+
+/* ═══════════════════════════════════════════
+   APPLY LOAN
+═══════════════════════════════════════════ */
+function bindApplyPreview() {
+  ['ap-amt','ap-rate','ap-tenure'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.oninput = calcApplyPreview;
+  });
+}
+
+function calcApplyPreview() {
+  const p = parseFloat(document.getElementById('ap-amt')?.value);
+  const r = parseFloat(document.getElementById('ap-rate')?.value) / 12 / 100;
+  const n = parseInt(document.getElementById('ap-tenure')?.value);
+  const prev = document.getElementById('ap-emi-preview');
+  if (p>0 && r>0 && n>0) {
+    const emi = (p*r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1);
+    const total = emi * n;
+    document.getElementById('ap-emi-val').textContent = '₹'+fmt(Math.round(emi));
+    document.getElementById('ap-total-val').textContent = '₹'+fmt(Math.round(total));
+    prev.style.display = 'block';
+  } else { prev.style.display = 'none'; }
+}
+
+async function submitApply(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('apply-err');
+  errEl.style.display = 'none';
+
+  const type = document.getElementById('ap-type').value;
+  if (!type) { errEl.textContent='Please select a loan type.'; errEl.style.display='block'; return; }
+
+  const payload = {
+    userId:         parseInt(SS.uid),
+    loanType:       type,
+    loanAmount:     parseFloat(document.getElementById('ap-amt').value),
+    interestRate:   parseFloat(document.getElementById('ap-rate').value),
+    tenureMonths:   parseInt(document.getElementById('ap-tenure').value),
+    monthlyIncome:  parseFloat(document.getElementById('ap-income').value),
+    employmentType: document.getElementById('ap-emp').value,
+    loanPurpose:    document.getElementById('ap-purpose').value,
+    status:         'PENDING',
+    appliedDate:    new Date().toISOString(),
+  };
+
+  ld('apply-btn','apply-txt','apply-sp',true,'Submitting…');
+  try {
+    const r = await apiFetch(API.applyLoan, {method:'POST', body:JSON.stringify(payload)});
+    const d = await r.json().catch(()=>({}));
+    if (r.ok || r.status===201) {
+      toast('✅ Application submitted successfully!','ok');
+      resetApply();
+      await loadUserLoans();        // Refresh user's loan list
+      go('loans');
+    } else {
+      errEl.textContent = d.message||d.error||'Application failed. Please try again.';
+      errEl.style.display = 'block';
+      toast('Application failed','err');
+    }
+  } catch(err) {
+    errEl.textContent = 'Network error. Check your connection.';
+    errEl.style.display = 'block';
+  } finally { ld('apply-btn','apply-txt','apply-sp',false,'Submit Application'); }
+}
+
+function resetApply() {
+  document.getElementById('apply-form').reset();
+  document.querySelectorAll('.ltp').forEach(b => b.classList.remove('on'));
+  document.getElementById('apply-err').style.display='none';
+  document.getElementById('ap-emi-preview').style.display='none';
+}
+
+/* ═══════════════════════════════════════════
+   EMI CALCULATOR
+═══════════════════════════════════════════ */
+function liveEMI() {
+  const p = parseFloat(document.getElementById('e-p').value);
+  const r = parseFloat(document.getElementById('e-r').value) / 12 / 100;
+  const n = parseInt(document.getElementById('e-t').value);
+  const lv = document.getElementById('e-live');
+  if (p>0&&r>0&&n>0) {
+    const emi = (p*r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1);
+    document.getElementById('e-live-val').textContent = '₹'+fmt(Math.round(emi));
+    lv.style.display='block';
+  } else lv.style.display='none';
+}
+
+async function calcEMI(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('emi-err');
+  errEl.style.display='none';
+
+  const payload = {
+    loanAppId:       parseInt(document.getElementById('e-lid').value),
+    principalAmount: parseFloat(document.getElementById('e-p').value),
+    interestRate:    parseFloat(document.getElementById('e-r').value),
+    tenureMonths:    parseInt(document.getElementById('e-t').value),
+    calculationDate: new Date().toISOString(),
+  };
+
+  ld('emi-btn','emi-txt','emi-sp',true,'Calculating…');
+  try {
+    const r = await apiFetch(API.emiCalc, {method:'POST', body:JSON.stringify(payload)});
+    const d = await r.json().catch(()=>({}));
+    if (r.ok||r.status===201) {
+      showEMIResult(d, payload);
+      toast('EMI saved!','ok');
+    } else {
+      showEMIResult(localEMI(payload), payload, true);
+    }
+  } catch(err) {
+    showEMIResult(localEMI(payload), payload, true);
+    errEl.textContent='Showing local calculation (API unreachable)';
+    errEl.style.display='block';
+  } finally { ld('emi-btn','emi-txt','emi-sp',false,'Calculate & Save'); }
+}
+
+function localEMI(p) {
+  const r = p.interestRate/12/100;
+  const emi = (p.principalAmount*r*Math.pow(1+r,p.tenureMonths))/(Math.pow(1+r,p.tenureMonths)-1);
+  const total = emi*p.tenureMonths;
+  return { emiAmount: Math.round(emi), totalAmount: Math.round(total), totalInterest: Math.round(total-p.principalAmount) };
+}
+
+function showEMIResult(d, p, local=false) {
+  const emi = d.emiAmount||d.monthlyEmi||d.emi||0;
+  const total = d.totalAmount||d.totalPayment||(emi*(p?.tenureMonths||0));
+  const interest = d.totalInterest||(total-(p?.principalAmount||0));
+  const pct = p?.principalAmount ? Math.round(p.principalAmount/total*100) : 0;
+
+  document.getElementById('emi-result').innerHTML = `
+    ${local?'<p style="color:var(--amber);font-size:.75rem;margin-bottom:10px;">⚠ Local calculation — API unavailable</p>':''}
+    <div style="background:var(--gold-dim);border:1px solid var(--border-gold);border-radius:12px;padding:16px;margin-bottom:14px;">
+      <p class="lbl" style="margin-bottom:4px;">Monthly EMI</p>
+      <p class="logo-t" style="font-size:2.2rem;color:var(--gold);">₹${fmt(Math.round(emi))}</p>
+    </div>
+    <div class="grid grid-cols-3 gap-3 mb-4">
+      <div class="card-xs"><p class="lbl" style="margin-bottom:3px;">Principal</p><p style="font-weight:700;font-size:.95rem;">₹${fmt(p?.principalAmount||0)}</p></div>
+      <div class="card-xs"><p class="lbl" style="margin-bottom:3px;">Interest</p><p style="font-weight:700;font-size:.95rem;color:var(--amber);">₹${fmt(Math.round(interest))}</p></div>
+      <div class="card-xs"><p class="lbl" style="margin-bottom:3px;">Total</p><p style="font-weight:700;font-size:.95rem;color:var(--green);">₹${fmt(Math.round(total))}</p></div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:.78rem;"><span style="color:var(--silver);">Principal ${pct}%</span><span style="color:var(--gold);">Interest ${100-pct}%</span></div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%;background:linear-gradient(90deg,var(--gold),var(--gold-l));"></div></div>
+    </div>`;
+}
+
+async function fetchEMI() {
+  const id = document.getElementById('e-fid').value;
+  if (!id) { toast('Enter a Loan App ID','info'); return; }
+  document.getElementById('e-fetched').innerHTML = '<div style="display:flex;justify-content:center;padding:12px;"><div class="sp sp-sm"></div></div>';
+  try {
+    const r = await apiFetch(API.emiFetch(id));
+    if (r.ok) {
+      const d = await r.json();
+      const emi = d.emiAmount||d.monthlyEmi||d.emi;
+      document.getElementById('e-fetched').innerHTML = `
+        <div style="background:var(--gold-dim);border:1px solid var(--border-gold);border-radius:10px;padding:13px;">
+          <p class="lbl" style="margin-bottom:4px;">Saved EMI – Loan App #${id}</p>
+          <p class="logo-t" style="font-size:1.5rem;color:var(--gold);">₹${fmt(emi||'N/A')}</p>
+          ${d.tenureMonths?`<p style="color:var(--silver);font-size:.76rem;margin-top:4px;">${d.tenureMonths} months · ${d.interestRate}% p.a.</p>`:''}
+        </div>`;
+    } else {
+      document.getElementById('e-fetched').innerHTML = `<p style="color:var(--red);font-size:.8rem;">No EMI record for App #${id}.</p>`;
+    }
+  } catch(e) { document.getElementById('e-fetched').innerHTML = '<p style="color:var(--red);font-size:.8rem;">Network error.</p>'; }
+}
+
+/* ═══════════════════════════════════════════
+   PAYMENTS
+═══════════════════════════════════════════ */
+async function fetchPay() {
+  const id = document.getElementById('pf-id').value;
+  if (!id) { toast('Enter a Loan App ID','info'); return; }
+  ld('pf-btn','pf-txt','pf-sp',true,'Fetching…');
+  document.getElementById('pay-list').innerHTML = '<div style="display:flex;justify-content:center;padding:32px;"><div class="sp sp-md"></div></div>';
+  try {
+    const r = await apiFetch(API.payFetch(id));
+    let d = r.ok ? await r.json() : null;
+    if (!d) { renderPay([], id); return; }
+    if (!Array.isArray(d)) d = d.payments||d.content||[d];
+    renderPay(d, id);
+  } catch(e) {
+    document.getElementById('pay-list').innerHTML = `<div class="empty" style="border:1px solid var(--border);border-radius:13px;"><p style="color:var(--red);">Failed to load payments.</p><button class="btn btn-o btn-sm" onclick="fetchPay()">Retry</button></div>`;
+  } finally { ld('pf-btn','pf-txt','pf-sp',false,'Fetch Payments'); }
+}
+
+function renderPay(pays, loanId) {
+  if (!pays.length) {
+    document.getElementById('pay-list').innerHTML = `<div class="empty" style="border:1px solid var(--border);border-radius:13px;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><p>No payments found for Loan App #${loanId}</p><button class="btn btn-p btn-sm" onclick="openPayModal();document.getElementById('pm-lid').value=${loanId}">Make First Payment</button></div>`;
+    return;
+  }
+  document.getElementById('pay-list').innerHTML = `
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#ID</th><th>Amount</th><th>Method</th><th>Transaction ID</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>${pays.map(p => `
+          <tr>
+            <td style="color:var(--gold);font-weight:600;">#${p.id||'—'}</td>
+            <td style="font-weight:700;">₹${fmt(p.amount)}</td>
+            <td>${p.paymentMethod||'—'}</td>
+            <td style="font-size:.76rem;color:var(--silver);">${p.transactionId||'—'}</td>
+            <td>${pill(p.paymentStatus||p.status)}</td>
+            <td>${p.paymentDate?new Date(p.paymentDate).toLocaleDateString('en-IN'):'—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function openPayModal() { document.getElementById('pay-modal').classList.add('open'); }
+function closePayModal() { document.getElementById('pay-modal').classList.remove('open'); document.getElementById('pay-form').reset(); document.getElementById('pay-err').style.display='none'; }
+
+async function submitPay(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('pay-err');
+  errEl.style.display='none';
+
+  const payload = {
+    loanApplicationId: parseInt(document.getElementById('pm-lid').value),
+    amount:            parseFloat(document.getElementById('pm-amt').value),
+    paymentMethod:     document.getElementById('pm-method').value,
+    transactionId:     document.getElementById('pm-txn').value.trim(),
+    paymentStatus:     'SUCCESS',
+    paymentDate:       new Date().toISOString(),
+  };
+
+  ld('pay-btn','pay-txt','pay-sp',true,'Processing…');
+  try {
+    const r = await apiFetch(API.pay, {method:'POST', body:JSON.stringify(payload)});
+    const d = await r.json().catch(()=>({}));
+    if (r.ok||r.status===201) {
+      toast('✅ Payment of ₹'+fmt(payload.amount)+' successful!','ok');
+      closePayModal();
+      document.getElementById('pf-id').value = payload.loanApplicationId;
+      fetchPay();
+    } else {
+      errEl.textContent = d.message||d.error||'Payment failed. Please try again.';
+      errEl.style.display='block';
+    }
+  } catch(err) {
+    errEl.textContent='Network error. Please try again.';
+    errEl.style.display='block';
+  } finally { ld('pay-btn','pay-txt','pay-sp',false,'Confirm Payment'); }
+}
+
+/* ═══════════════════════════════════════════
+   CREDIT SCORE
+═══════════════════════════════════════════ */
+async function loadCredit() {
+  document.getElementById('credit-wrap').innerHTML = '<div style="display:flex;justify-content:center;padding:64px 0;"><div class="sp sp-lg"></div></div>';
+  try {
+    const r = await apiFetch(API.credit(SS.uid));
+    if (r.ok) { const d = await r.json(); renderCredit(d); return; }
+  } catch(e) {}
+  renderCredit(null);
+}
+
+function renderCredit(data) {
+  const score = data?.creditScore||data?.score||data?.value || null;
+  if (!score) {
+    document.getElementById('credit-wrap').innerHTML = `
+      <div class="empty card"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <p>No credit data available yet.</p>
+        <p style="font-size:.8rem;opacity:.6;">Complete a loan repayment to build your score.</p>
+        <button class="btn btn-o btn-sm" onclick="loadCredit()">Retry</button>
+      </div>`;
+    return;
+  }
+  const max=900; const pct=score/max;
+  const color = score>=750?'var(--green)':score>=650?'var(--gold)':'var(--red)';
+  const label = score>=750?'Excellent':score>=650?'Good':score>=550?'Fair':'Poor';
+  const r=60; const circ=2*Math.PI*r; const dash=circ*pct;
+
+  document.getElementById('credit-wrap').innerHTML = `
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div class="card text-center">
+        <h3 style="font-weight:700;margin-bottom:18px;">Your Credit Score</h3>
+        <div class="ring-wrap" style="width:140px;height:140px;">
+          <svg viewBox="0 0 140 140" width="140" height="140">
+            <circle class="ring-bg" cx="70" cy="70" r="${r}"/>
+            <circle class="ring-fill" cx="70" cy="70" r="${r}" stroke="${color}" stroke-dasharray="${circ}" stroke-dashoffset="${circ-dash}"/>
+          </svg>
+          <div class="ring-inner">
+            <p class="logo-t" style="font-size:1.9rem;color:${color};">${score}</p>
+            <p style="color:var(--silver);font-size:.72rem;">${label}</p>
+          </div>
+        </div>
+        <p style="color:var(--silver);font-size:.76rem;margin-top:12px;">Score out of ${max}</p>
+        <span class="badge" style="margin-top:8px;display:inline-flex;background:${color}20;color:${color};border-color:${color}44;">${label} Credit Rating</span>
+      </div>
+      <div class="card md:col-span-2">
+        <h3 style="font-weight:700;margin-bottom:18px;">Score Factors</h3>
+        ${cf('Payment History',92,'var(--green)')}
+        ${cf('Credit Utilization',68,'var(--gold)')}
+        ${cf('Credit Age',75,'var(--gold)')}
+        ${cf('Credit Mix',58,'var(--amber)')}
+        ${cf('Recent Inquiries',82,'var(--green)')}
+        <p style="color:var(--silver);font-size:.75rem;margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">Last updated: ${data?.lastUpdated||new Date().toLocaleDateString('en-IN')}</p>
+      </div>
+    </div>`;
+}
+
+function cf(name, pct, color) {
+  return `<div style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:.83rem;"><span>${name}</span><span style="color:${color};font-weight:700;">${pct}%</span></div><div class="pbar"><div class="pfill" style="width:${pct}%;background:${color};"></div></div></div>`;
+}
+
+/* ═══════════════════════════════════════════
+   PROFILE EDIT MODAL
+═══════════════════════════════════════════ */
+function openProfM() {
+  const u = userProfile || {};
+  document.getElementById('pe-name').value    = u.fullName||'';
+  document.getElementById('pe-email').value   = u.email||'';
+  document.getElementById('pe-phone').value   = u.phone||'';
+  document.getElementById('pe-aadhaar').value = u.aadhaarNumber||'';
+  document.getElementById('pe-pan').value     = u.panNumber||'';
+  document.getElementById('pe-city').value    = u.city||'';
+  document.getElementById('pe-state').value   = u.state||'';
+  document.getElementById('pe-pin').value     = u.pincode||'';
+  document.getElementById('pe-addr').value    = u.address||'';
+  document.getElementById('pe-pass').value    = '';
+  document.getElementById('prof-err').style.display='none';
+  document.getElementById('prof-modal').classList.add('open');
+}
+function closeProfM() { document.getElementById('prof-modal').classList.remove('open'); }
+
+async function submitProfile(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('prof-err');
+  errEl.style.display='none';
+
+  const payload = {
+    fullName:      document.getElementById('pe-name').value,
+    email:         document.getElementById('pe-email').value,
+    phone:         document.getElementById('pe-phone').value,
+    aadhaarNumber: document.getElementById('pe-aadhaar').value,
+    panNumber:     document.getElementById('pe-pan').value.toUpperCase(),
+    city:          document.getElementById('pe-city').value,
+    state:         document.getElementById('pe-state').value,
+    pincode:       document.getElementById('pe-pin').value,
+    address:       document.getElementById('pe-addr').value,
+    role:          'ROLE_USER',
+  };
+  const pass = document.getElementById('pe-pass').value;
+  if (pass) payload.password = pass;
+
+  ld('pe-btn','pe-txt','pe-sp',true,'Saving…');
+  try {
+    const r = await apiFetch(API.putUser(SS.uid), {method:'PUT', body:JSON.stringify(payload)});
+    const d = await r.json().catch(()=>({}));
+    if (r.ok) {
+      userProfile = {...(userProfile||{}), ...payload};
+      SS.name  = payload.fullName;
+      SS.email = payload.email;
+      setMeta(payload.fullName, payload.email);
+      toast('✅ Profile updated!','ok');
+      closeProfM();
+      renderProfile();
+    } else {
+      errEl.textContent = d.message||d.error||'Update failed.';
+      errEl.style.display='block';
+    }
+  } catch(err) { errEl.textContent='Network error.'; errEl.style.display='block'; }
+  finally { ld('pe-btn','pe-txt','pe-sp',false,'Save Changes'); }
+}
+
+/* ═══════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════ */
+function lId(l) { return l.id||l.loanId||l.loanApplicationId||0; }
+
+function fmt(n) {
+  if (n===null||n===undefined||isNaN(n)) return '0';
+  return Number(n).toLocaleString('en-IN');
+}
+
+function pill(status) {
+  const m = { APPROVED:'b-green', PENDING:'b-gold', REJECTED:'b-red', ACTIVE:'b-green', CLOSED:'b-silver', SUCCESS:'b-green', FAILED:'b-red', PROCESSING:'b-amber' };
+  return `<span class="badge ${m[status]||'b-silver'}">${status||'—'}</span>`;
+}
+
+function ld(btnId, txtId, spId, on, label) {
+  const btn = document.getElementById(btnId);
+  const txt = document.getElementById(txtId);
+  const sp  = document.getElementById(spId);
+  if (btn) btn.disabled = on;
+  if (txt) txt.textContent = label;
+  if (sp)  sp.style.display = on ? 'block' : 'none';
+}
+
+function toast(msg, type='info') {
+  const icons = {
+    ok:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>',
+    err: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+    info:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+  };
+  const cls = {ok:'t-ok', err:'t-err', info:'t-info'};
+  const div = document.createElement('div');
+  div.className = `toast ${cls[type]||'t-info'}`;
+  div.innerHTML = `${icons[type]||icons.info}<span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(div);
+  setTimeout(() => div.style.opacity='0', 4000);
+  setTimeout(() => div.remove(), 4400);
+}
+
+function ovl(msg) { document.getElementById('ovl-msg').textContent=msg||''; document.getElementById('ovl').classList.add('on'); }
+function hideOvl() { document.getElementById('ovl').classList.remove('on'); }
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function doLogout() {
+  sessionStorage.clear();
+  window.location.replace('user-auth.html');
+}
+
+/* PAN uppercase */
+document.getElementById('pe-pan')?.addEventListener('input', function(){ this.value=this.value.toUpperCase(); });
+/* Digit-only */
+['pe-phone','pe-aadhaar','pe-pin','pm-lid','pm-amt','pf-id','e-lid','e-p','e-t'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', function(){ if(['pe-phone','pe-aadhaar','pe-pin'].includes(id)) this.value=this.value.replace(/\D/g,''); });
+});
 </script>
 </body>
 </html>
