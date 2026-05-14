@@ -571,7 +571,7 @@ tbody td{padding:12px 15px;color:#c8d8ee;white-space:nowrap}
 
 
 
-  <!-- ════════ PROFILE ════════ -->
+ <!-- ════════ PROFILE ════════ -->
   <section id="sec-profile" class="sec">
     <div style="margin-bottom:18px;">
       <h2 style="font-weight:700;font-size:1.2rem;">My Profile</h2>
@@ -678,6 +678,8 @@ tbody td{padding:12px 15px;color:#c8d8ee;white-space:nowrap}
     </form>
   </div>
 </div>
+
+
 <script>
 /* ═══════════════════════════════════════════
    BASE URL & APIS — all scoped to userId
@@ -944,7 +946,7 @@ function renderOverview() {
   rEl.innerHTML = recent.map(l => `
     <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--border);" onclick="viewLoan(${lId(l)})" style="cursor:pointer;">
       <div>
-        <p style="font-weight:600;font-size:.88rem;">${l.loanType||'Loan'} <span style="color:#2e4a68;">#${lId(l)}</span></p>
+        <p style="font-weight:600;font-size:.88rem;">${lType(l)} <span style="color:#2e4a68;">#${lId(l)}</span></p>
         <p style="color:var(--silver);font-size:.78rem;margin-top:2px;">₹${fmt(l.loanAmount)} · ${l.tenureMonths||'—'} months · ${l.interestRate||'—'}% p.a.</p>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
@@ -992,7 +994,7 @@ function renderLoans(loans, filter) {
         <tbody>${filtered.map(l => `
           <tr style="cursor:pointer;" onclick="viewLoan(${lId(l)})">
             <td style="color:var(--gold);font-weight:600;">#${lId(l)}</td>
-            <td>${l.loanType||'—'}</td>
+            <td>${lType(l)||'—'}</td>
             <td style="font-weight:600;">₹${fmt(l.loanAmount)}</td>
             <td>${l.interestRate||'—'}%</td>
             <td>${l.tenureMonths||'—'} mo</td>
@@ -1009,7 +1011,7 @@ function renderLoans(loans, filter) {
         <div class="loan-card" onclick="viewLoan(${lId(l)})">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;">
             <div>
-              <p style="font-weight:700;font-size:.9rem;">${l.loanType||'Loan'}</p>
+              <p style="font-weight:700;font-size:.9rem;">${lType(l)}</p>
               <p style="color:var(--silver);font-size:.73rem;margin-top:1px;">#${lId(l)}</p>
             </div>
             ${pill(l.status)}
@@ -1052,7 +1054,7 @@ async function viewLoan(id) {
   document.getElementById('loan-detail').innerHTML = `
     <div class="grid grid-cols-2 gap-3 mb-4">
       ${dRow('Loan ID','#'+lId(l))}
-      ${dRow('Type',l.loanType)}
+      ${dRow('Type',lType(l))}
       ${dRow('Amount','₹'+fmt(l.loanAmount))}
       ${dRow('Interest Rate',(l.interestRate||'—')+'% p.a.')}
       ${dRow('Tenure',(l.tenureMonths||'—')+' months')}
@@ -1476,6 +1478,14 @@ async function submitProfile(e) {
    UTILITIES
 ═══════════════════════════════════════════ */
 function lId(l) { return l.id||l.loanId||l.loanApplicationId||0; }
+/* loanType can arrive as a string OR as an object {id,name,loanType,type} */
+function lType(l) {
+  const raw = l.loanType;
+  if (!raw) return 'Loan';
+  if (typeof raw === 'string') return raw;
+  if (typeof raw === 'object') return raw.name || raw.loanType || raw.type || raw.loanTypeName || JSON.stringify(raw).replace(/[{}"]/g,'');
+  return String(raw);
+}
 
 function fmt(n) {
   if (n===null||n===undefined||isNaN(n)) return '0';
