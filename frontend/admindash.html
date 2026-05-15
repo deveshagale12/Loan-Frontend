@@ -519,7 +519,7 @@
         <div class="stat-card space-y-5">
           <div>
             <label style="font-size:11px; letter-spacing:0.12em; color:var(--gold); text-transform:uppercase;">API Endpoint</label>
-            <input class="inp mt-2" id="apiBase" value="http://localhost:8080"/>
+            <input class="inp mt-2" id="apiBase" value="https://loanapplication-712h.onrender.com"/>
           </div>
           <div>
             <label style="font-size:11px; letter-spacing:0.12em; color:rgba(200,200,220,0.4); text-transform:uppercase;">Admin Email</label>
@@ -587,7 +587,7 @@
   let allApplications = [];
   let selectedLoanId  = null;
   let sidebarOpen     = true;
-  let API_BASE        = localStorage.getItem('apiBase') || 'http://localhost:8080';
+  let API_BASE        = localStorage.getItem('apiBase') || 'https://loanapplication-712h.onrender.com';
 
   // ── Auth guard ──
   const token = localStorage.getItem('adminToken');
